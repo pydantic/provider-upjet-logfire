@@ -12,9 +12,13 @@ on:
         default: '1.24'
         required: false
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   publish-provider-package:
-    uses: crossplane-contrib/provider-workflows/.github/workflows/publish-provider.yml@main
+    uses: crossplane-contrib/provider-workflows/.github/workflows/publish-provider-non-family.yml@main
     with:
       repository: provider-upjet-logfire
       version: ${{ github.event.inputs.version }}
