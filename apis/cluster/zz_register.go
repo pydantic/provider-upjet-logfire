@@ -10,7 +10,10 @@ package cluster
 import (
 	"k8s.io/apimachinery/pkg/runtime"
 
-	v1alpha1 "github.com/pydantic/provider-upjet-logfire/apis/cluster/project/v1alpha1"
+	v1alpha1 "github.com/pydantic/provider-upjet-logfire/apis/cluster/alert/v1alpha1"
+	v1alpha1channel "github.com/pydantic/provider-upjet-logfire/apis/cluster/channel/v1alpha1"
+	v1alpha1dashboard "github.com/pydantic/provider-upjet-logfire/apis/cluster/dashboard/v1alpha1"
+	v1alpha1project "github.com/pydantic/provider-upjet-logfire/apis/cluster/project/v1alpha1"
 	v1alpha1token "github.com/pydantic/provider-upjet-logfire/apis/cluster/token/v1alpha1"
 	v1alpha1cluster "github.com/pydantic/provider-upjet-logfire/apis/cluster/v1alpha1"
 	v1beta1 "github.com/pydantic/provider-upjet-logfire/apis/cluster/v1beta1"
@@ -20,6 +23,9 @@ func init() {
 	// Register the types with the Scheme so the components can map objects to GroupVersionKinds and back
 	AddToSchemes = append(AddToSchemes,
 		v1alpha1.SchemeBuilder.AddToScheme,
+		v1alpha1channel.SchemeBuilder.AddToScheme,
+		v1alpha1dashboard.SchemeBuilder.AddToScheme,
+		v1alpha1project.SchemeBuilder.AddToScheme,
 		v1alpha1token.SchemeBuilder.AddToScheme,
 		v1alpha1cluster.SchemeBuilder.AddToScheme,
 		v1beta1.SchemeBuilder.AddToScheme,

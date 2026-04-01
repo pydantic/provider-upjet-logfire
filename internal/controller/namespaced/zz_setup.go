@@ -9,8 +9,12 @@ import (
 
 	"github.com/crossplane/upjet/v2/pkg/controller"
 
+	alert "github.com/pydantic/provider-upjet-logfire/internal/controller/namespaced/alert/alert"
+	channel "github.com/pydantic/provider-upjet-logfire/internal/controller/namespaced/channel/channel"
+	dashboard "github.com/pydantic/provider-upjet-logfire/internal/controller/namespaced/dashboard/dashboard"
 	project "github.com/pydantic/provider-upjet-logfire/internal/controller/namespaced/project/project"
 	providerconfig "github.com/pydantic/provider-upjet-logfire/internal/controller/namespaced/providerconfig"
+	readtoken "github.com/pydantic/provider-upjet-logfire/internal/controller/namespaced/token/readtoken"
 	writetoken "github.com/pydantic/provider-upjet-logfire/internal/controller/namespaced/token/writetoken"
 )
 
@@ -18,8 +22,12 @@ import (
 // the supplied manager.
 func Setup(mgr ctrl.Manager, o controller.Options) error {
 	for _, setup := range []func(ctrl.Manager, controller.Options) error{
+		alert.Setup,
+		channel.Setup,
+		dashboard.Setup,
 		project.Setup,
 		providerconfig.Setup,
+		readtoken.Setup,
 		writetoken.Setup,
 	} {
 		if err := setup(mgr, o); err != nil {
@@ -33,8 +41,12 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 // the supplied manager gated.
 func SetupGated(mgr ctrl.Manager, o controller.Options) error {
 	for _, setup := range []func(ctrl.Manager, controller.Options) error{
+		alert.SetupGated,
+		channel.SetupGated,
+		dashboard.SetupGated,
 		project.SetupGated,
 		providerconfig.SetupGated,
+		readtoken.SetupGated,
 		writetoken.SetupGated,
 	} {
 		if err := setup(mgr, o); err != nil {

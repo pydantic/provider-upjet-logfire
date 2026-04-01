@@ -6,9 +6,17 @@ import (
 
 	ujconfig "github.com/crossplane/upjet/v2/pkg/config"
 
+	alertCluster "github.com/pydantic/provider-upjet-logfire/config/cluster/alert"
+	channelCluster "github.com/pydantic/provider-upjet-logfire/config/cluster/channel"
+	dashboardCluster "github.com/pydantic/provider-upjet-logfire/config/cluster/dashboard"
 	projectCluster "github.com/pydantic/provider-upjet-logfire/config/cluster/project"
+	readTokenCluster "github.com/pydantic/provider-upjet-logfire/config/cluster/readtoken"
 	tokenCluster "github.com/pydantic/provider-upjet-logfire/config/cluster/token"
+	alertNamespaced "github.com/pydantic/provider-upjet-logfire/config/namespaced/alert"
+	channelNamespaced "github.com/pydantic/provider-upjet-logfire/config/namespaced/channel"
+	dashboardNamespaced "github.com/pydantic/provider-upjet-logfire/config/namespaced/dashboard"
 	projectNamespaced "github.com/pydantic/provider-upjet-logfire/config/namespaced/project"
+	readTokenNamespaced "github.com/pydantic/provider-upjet-logfire/config/namespaced/readtoken"
 	tokenNamespaced "github.com/pydantic/provider-upjet-logfire/config/namespaced/token"
 )
 
@@ -35,7 +43,11 @@ func GetProvider() *ujconfig.Provider {
 
 	for _, configure := range []func(provider *ujconfig.Provider){
 		// add custom config functions
+		alertCluster.Configure,
+		channelCluster.Configure,
+		dashboardCluster.Configure,
 		projectCluster.Configure,
+		readTokenCluster.Configure,
 		tokenCluster.Configure,
 	} {
 		configure(pc)
@@ -60,7 +72,11 @@ func GetProviderNamespaced() *ujconfig.Provider {
 
 	for _, configure := range []func(provider *ujconfig.Provider){
 		// add custom config functions
+		alertNamespaced.Configure,
+		channelNamespaced.Configure,
+		dashboardNamespaced.Configure,
 		projectNamespaced.Configure,
+		readTokenNamespaced.Configure,
 		tokenNamespaced.Configure,
 	} {
 		configure(pc)

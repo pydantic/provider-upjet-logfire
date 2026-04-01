@@ -4,11 +4,12 @@
 Logfire API, generated with [Upjet](https://github.com/crossplane/upjet).
 
 The current provider surface is intentionally small:
+- `Alert`
+- `Channel`
+- `Dashboard`
 - `Project`
+- `ReadToken`
 - `WriteToken`
-
-That is enough for the `crossplane-mvp` management plane to provision one
-central Logfire project and one write token per tenant.
 
 ## Install
 
