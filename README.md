@@ -1,42 +1,57 @@
-# Provider Template
+# Provider Logfire
 
-`upjet-provider-template` is a [Crossplane](https://crossplane.io/) provider
-template that is built using [Upjet](https://github.com/crossplane/upjet) code
-generation tools and exposes XRM-conformant managed resources for the Template
-API.
+`provider-upjet-logfire` is a [Crossplane](https://crossplane.io/) provider for the
+Logfire API, generated with [Upjet](https://github.com/crossplane/upjet).
 
-## Getting Started
+The current provider surface is intentionally small:
+- `Project`
+- `WriteToken`
 
-This template serves as a starting point for generating a new [Crossplane Provider](https://docs.crossplane.io/latest/packages/providers/) using the [`upjet`](https://github.com/crossplane/upjet) tooling. Please follow the guide linked below to generate a new Provider:
+That is enough for the `crossplane-mvp` management plane to provision one
+central Logfire project and one write token per tenant.
 
-https://github.com/crossplane/upjet/blob/main/docs/generating-a-provider.md
+## Install
+
+```yaml
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: provider-upjet-logfire
+spec:
+  package: xpkg.crossplane.io/pydantic/provider-upjet-logfire:v0.1.0
+```
+
+## Credentials
+
+The provider expects credentials as JSON with:
+- `api_key`
+- optional `base_url`
+
+Example secret payload:
+
+```json
+{
+  "api_key": "pylf_v2_...",
+  "base_url": "https://logfire.example.com"
+}
+```
 
 ## Developing
 
-Run code-generation pipeline:
-```console
-go run cmd/generator/main.go "$PWD"
-```
-
-Run against a Kubernetes cluster:
+Generate code:
 
 ```console
-make run
+make generate
 ```
 
-Build, push, and install:
+Run tests:
 
 ```console
-make all
+go test ./...
 ```
 
-Build binary:
+Build:
 
 ```console
-make build
+go build ./...
 ```
-
-## Report a Bug
-
-For filing bugs, suggesting improvements, or requesting new features, please
-open an [issue](https://github.com/crossplane/upjet-provider-template/issues).

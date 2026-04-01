@@ -7,7 +7,7 @@ import (
 
 // Package type metadata.
 const (
-	Group   = "template.crossplane.io"
+	Group   = "logfire.pydantic.dev"
 	Version = "v1alpha1"
 )
 

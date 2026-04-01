@@ -1,4 +1,4 @@
-module github.com/crossplane/upjet-provider-template
+module github.com/pydantic/provider-upjet-logfire
 
 go 1.24.11
 

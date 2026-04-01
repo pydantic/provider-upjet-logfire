@@ -1,0 +1,13 @@
+apiVersion: token.logfire.pydantic.dev/v1alpha1
+kind: WriteToken
+metadata:
+  name: smoke-write-token
+spec:
+  providerConfigRef:
+    name: default
+  writeConnectionSecretToRef:
+    name: smoke-write-token
+    namespace: crossplane-system
+  forProvider:
+    projectIdRef:
+      name: smoke-project
