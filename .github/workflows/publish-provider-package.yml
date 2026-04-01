@@ -1,6 +1,9 @@
 name: Publish Provider Package
 
 on:
+  push:
+    tags:
+      - 'v*'
   workflow_dispatch:
     inputs:
       version:
@@ -22,8 +25,8 @@ jobs:
     with:
       repository: provider-upjet-logfire
       registry_org: pydantic
-      version: ${{ github.event.inputs.version }}
-      go-version: ${{ github.event.inputs.go-version }}
+      version: ${{ github.event_name == 'push' && github.ref_name || github.event.inputs.version }}
+      go-version: ${{ github.event_name == 'push' && '1.24' || github.event.inputs.go-version }}
       cleanup-disk: true
     secrets:
       GHCR_PAT: ${{ secrets.GITHUB_TOKEN }}
