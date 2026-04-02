@@ -13,6 +13,12 @@ The current provider surface is intentionally small:
 
 ## Install
 
+For complete examples, see:
+- `examples/install.yaml`
+- `examples/cluster/providerconfig/providerconfig.yaml`
+- `examples/cluster/smoke/project.yaml`
+- `examples/cluster/smoke/writetoken.yaml`
+
 ```yaml
 apiVersion: pkg.crossplane.io/v1
 kind: Provider
