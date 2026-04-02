@@ -19,6 +19,8 @@ For complete examples, see:
 - `examples/cluster/smoke/project.yaml`
 - `examples/cluster/smoke/writetoken.yaml`
 
+Per-resource generated reference examples are under `examples-generated/` for all supported resources.
+
 ```yaml
 apiVersion: pkg.crossplane.io/v1
 kind: Provider
