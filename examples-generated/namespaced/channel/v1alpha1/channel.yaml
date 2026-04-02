@@ -1,0 +1,13 @@
+apiVersion: channel.logfire.m.pydantic.dev/v1alpha1
+kind: Channel
+metadata:
+  annotations:
+    meta.upbound.io/example-id: channel/v1alpha1/channel
+  labels:
+    testing.upbound.io/example-name: example
+  name: example
+  namespace: crossplane-system
+spec:
+  forProvider:
+    active: true
+    name: alerts-webhook

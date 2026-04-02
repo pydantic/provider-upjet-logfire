@@ -1,0 +1,57 @@
+// SPDX-FileCopyrightText: 2024 The Crossplane Authors <https://crossplane.io>
+//
+// SPDX-License-Identifier: Apache-2.0
+
+package controller
+
+import (
+	ctrl "sigs.k8s.io/controller-runtime"
+
+	"github.com/crossplane/upjet/v2/pkg/controller"
+
+	alert "github.com/pydantic/provider-upjet-logfire/internal/controller/namespaced/alert/alert"
+	channel "github.com/pydantic/provider-upjet-logfire/internal/controller/namespaced/channel/channel"
+	dashboard "github.com/pydantic/provider-upjet-logfire/internal/controller/namespaced/dashboard/dashboard"
+	project "github.com/pydantic/provider-upjet-logfire/internal/controller/namespaced/project/project"
+	providerconfig "github.com/pydantic/provider-upjet-logfire/internal/controller/namespaced/providerconfig"
+	readtoken "github.com/pydantic/provider-upjet-logfire/internal/controller/namespaced/token/readtoken"
+	writetoken "github.com/pydantic/provider-upjet-logfire/internal/controller/namespaced/token/writetoken"
+)
+
+// Setup creates all controllers with the supplied logger and adds them to
+// the supplied manager.
+func Setup(mgr ctrl.Manager, o controller.Options) error {
+	for _, setup := range []func(ctrl.Manager, controller.Options) error{
+		alert.Setup,
+		channel.Setup,
+		dashboard.Setup,
+		project.Setup,
+		providerconfig.Setup,
+		readtoken.Setup,
+		writetoken.Setup,
+	} {
+		if err := setup(mgr, o); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// SetupGated creates all controllers with the supplied logger and adds them to
+// the supplied manager gated.
+func SetupGated(mgr ctrl.Manager, o controller.Options) error {
+	for _, setup := range []func(ctrl.Manager, controller.Options) error{
+		alert.SetupGated,
+		channel.SetupGated,
+		dashboard.SetupGated,
+		project.SetupGated,
+		providerconfig.SetupGated,
+		readtoken.SetupGated,
+		writetoken.SetupGated,
+	} {
+		if err := setup(mgr, o); err != nil {
+			return err
+		}
+	}
+	return nil
+}

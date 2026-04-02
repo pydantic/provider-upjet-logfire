@@ -1,0 +1,8 @@
+[
+  "logfire_alert",
+  "logfire_channel",
+  "logfire_dashboard",
+  "logfire_project",
+  "logfire_read_token",
+  "logfire_write_token"
+]

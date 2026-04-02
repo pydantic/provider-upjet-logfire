@@ -1,0 +1,30 @@
+apiVersion: token.logfire.m.pydantic.dev/v1alpha1
+kind: WriteToken
+metadata:
+  annotations:
+    meta.upbound.io/example-id: token/v1alpha1/writetoken
+  labels:
+    testing.upbound.io/example-name: example
+  name: example
+  namespace: crossplane-system
+spec:
+  forProvider:
+    expiresAt: "2099-12-31T23:59:59Z"
+    projectIdSelector:
+      matchLabels:
+        testing.upbound.io/example-name: example
+
+---
+
+apiVersion: project.logfire.m.pydantic.dev/v1alpha1
+kind: Project
+metadata:
+  annotations:
+    meta.upbound.io/example-id: token/v1alpha1/writetoken
+  labels:
+    testing.upbound.io/example-name: example
+  name: example
+  namespace: crossplane-system
+spec:
+  forProvider:
+    name: example-project

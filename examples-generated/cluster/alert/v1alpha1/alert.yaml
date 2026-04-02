@@ -1,0 +1,57 @@
+apiVersion: alert.logfire.pydantic.dev/v1alpha1
+kind: Alert
+metadata:
+  annotations:
+    meta.upbound.io/example-id: alert/v1alpha1/alert
+  labels:
+    testing.upbound.io/example-name: example
+  name: example
+spec:
+  forProvider:
+    active: true
+    channelIdRefs:
+    - name: example
+    description: Alert on exception spans
+    frequency: 15m
+    name: error-alert
+    notifyWhen: has_matches
+    projectIdSelector:
+      matchLabels:
+        testing.upbound.io/example-name: example
+    query: |
+      select
+        service_name,
+        trace_id,
+        otel_status_message as exception_message
+      from records
+      where level = 'error'
+      order by start_timestamp desc
+    timeWindow: 1h
+
+---
+
+apiVersion: channel.logfire.pydantic.dev/v1alpha1
+kind: Channel
+metadata:
+  annotations:
+    meta.upbound.io/example-id: alert/v1alpha1/alert
+  labels:
+    testing.upbound.io/example-name: example
+  name: example
+spec:
+  forProvider:
+    name: alerts-webhook
+
+---
+
+apiVersion: project.logfire.pydantic.dev/v1alpha1
+kind: Project
+metadata:
+  annotations:
+    meta.upbound.io/example-id: alert/v1alpha1/alert
+  labels:
+    testing.upbound.io/example-name: example
+  name: example
+spec:
+  forProvider:
+    name: example-project

@@ -1,0 +1,32 @@
+apiVersion: dashboard.logfire.m.pydantic.dev/v1alpha1
+kind: Dashboard
+metadata:
+  annotations:
+    meta.upbound.io/example-id: dashboard/v1alpha1/dashboard
+  labels:
+    testing.upbound.io/example-name: example
+  name: example
+  namespace: crossplane-system
+spec:
+  forProvider:
+    definition: ${file("${path.module}/dashboard.json")}
+    name: example-dashboard
+    projectIdSelector:
+      matchLabels:
+        testing.upbound.io/example-name: example
+    slug: example-dashboard
+
+---
+
+apiVersion: project.logfire.m.pydantic.dev/v1alpha1
+kind: Project
+metadata:
+  annotations:
+    meta.upbound.io/example-id: dashboard/v1alpha1/dashboard
+  labels:
+    testing.upbound.io/example-name: example
+  name: example
+  namespace: crossplane-system
+spec:
+  forProvider:
+    name: example-project

@@ -1,0 +1,220 @@
+name: pydantic/logfire
+resources:
+    logfire_alert:
+        subCategory: ""
+        description: Manages a Logfire alert.
+        name: logfire_alert
+        title: logfire_alert Resource - logfire
+        examples:
+            - name: example
+              manifest: |-
+                {
+                  "active": true,
+                  "channel_ids": [
+                    "${logfire_channel.example.id}"
+                  ],
+                  "description": "Alert on exception spans",
+                  "frequency": "15m",
+                  "name": "error-alert",
+                  "notify_when": "has_matches",
+                  "project_id": "${logfire_project.example.id}",
+                  "query": "select\n  service_name,\n  trace_id,\n  otel_status_message as exception_message\nfrom records\nwhere level = 'error'\norder by start_timestamp desc\n",
+                  "time_window": "1h"
+                }
+              references:
+                channel_ids: logfire_channel.example.id
+                project_id: logfire_project.example.id
+              dependencies:
+                logfire_channel.example: |-
+                    {
+                      "config": [
+                        {
+                          "format": "auto",
+                          "type": "webhook",
+                          "url": "https://example.com/logfire-webhook"
+                        }
+                      ],
+                      "name": "alerts-webhook"
+                    }
+                logfire_project.example: |-
+                    {
+                      "name": "example-project"
+                    }
+        argumentDocs:
+            active: (Boolean) Whether the alert is active (defaults to true on creation).
+            channel_ids: (Set of String) Set of channel IDs to notify.
+            description: (String) Alert description.
+            frequency: (String) Evaluation frequency as Go duration.
+            id: (String) Alert ID.
+            name: (String) Alert name (unique per project).
+            notify_when: (String) Notification rule. Must match API enum.
+            project_id: (String) Project ID (UUID) used for alert API paths.
+            query: (String) SQL / query string used by the alert.
+            time_window: (String) Lookback window as Go duration.
+            watermark: (String) Provider-managed watermark (lateness tolerance) sent to the API.
+        importStatements: []
+    logfire_channel:
+        subCategory: ""
+        description: Manages a Logfire alert channel.
+        name: logfire_channel
+        title: logfire_channel Resource - logfire
+        examples:
+            - name: example
+              manifest: |-
+                {
+                  "active": true,
+                  "config": [
+                    {
+                      "format": "auto",
+                      "type": "webhook",
+                      "url": "https://example.com/logfire-webhook"
+                    }
+                  ],
+                  "name": "alerts-webhook"
+                }
+        argumentDocs:
+            active: (Boolean) Whether the channel is active.
+            auth_key: (String, Sensitive) Opsgenie API key.
+            config: (Block, Optional) Required channel configuration. (see below for nested schema)
+            format: (String) Webhook payload format.
+            id: (String) Channel ID.
+            name: (String) Channel name.
+            type: (String) Channel type (webhook or opsgenie).
+            url: (String) Webhook URL endpoint.
+        importStatements: []
+    logfire_dashboard:
+        subCategory: ""
+        description: Manages a Logfire dashboard.
+        name: logfire_dashboard
+        title: logfire_dashboard Resource - logfire
+        examples:
+            - name: example
+              manifest: |-
+                {
+                  "definition": "${file(\"${path.module}/dashboard.json\")}",
+                  "name": "example-dashboard",
+                  "project_id": "${logfire_project.example.id}",
+                  "slug": "example-dashboard"
+                }
+              references:
+                project_id: logfire_project.example.id
+              dependencies:
+                logfire_project.example: |-
+                    {
+                      "name": "example-project"
+                    }
+        argumentDocs:
+            definition: (String) Dashboard definition JSON payload.
+            id: (String) Dashboard UUID assigned by the backend.
+            name: (String) Dashboard display name.
+            project_id: (String) Project UUID used for API paths.
+            slug: (String) Dashboard slug used in URLs.
+        importStatements: []
+    logfire_organization:
+        subCategory: ""
+        description: Manages a Logfire organization. This resource is only available for self-hosted deployments and requires an API key with a special organization scope.
+        name: logfire_organization
+        title: logfire_organization Resource - logfire
+        examples:
+            - name: example
+              manifest: |-
+                {
+                  "deletion_protection": false,
+                  "display_name": "Terraform Example Org",
+                  "name": "terraform-example-org"
+                }
+        argumentDocs:
+            ai_enabled: (Boolean) Whether AI features are enabled.
+            avatar: (String) Avatar URL.
+            billing_email: (String) Billing contact email.
+            created_at: (String) Timestamp when the organization was created.
+            deletion_protection: (Boolean) Prevents accidental destroy when true (defaults to true). Set to false and apply before deleting this resource.
+            description: (String) Organization description.
+            display_name: (String) Display name shown in the UI.
+            gateway_enabled: (Boolean) Whether gateway features are enabled.
+            github_handle: (String) Organization GitHub handle.
+            has_admin_panel: (Boolean) Whether the organization has access to the admin panel.
+            id: (String) Organization UUID assigned by the backend.
+            location: (String) Organization location.
+            name: (String) Organization name/slug.
+            updated_at: (String) Timestamp when the organization was last updated.
+        importStatements: []
+    logfire_project:
+        subCategory: ""
+        description: Manages a Logfire project.
+        name: logfire_project
+        title: logfire_project Resource - logfire
+        examples:
+            - name: example
+              manifest: |-
+                {
+                  "description": "Managed by Terraform",
+                  "name": "example-project"
+                }
+        argumentDocs:
+            description: (String) Project description.
+            id: (String) Opaque backend project ID (not the slug).
+            name: (String) Project name/slug. Must be unique within the organization.
+            organization: (String) Organization name. Computed from the API and cannot be set.
+            visibility: (String) Project visibility (public or private).
+        importStatements: []
+    logfire_read_token:
+        subCategory: ""
+        description: Manages a Logfire read token.
+        name: logfire_read_token
+        title: logfire_read_token Resource - logfire
+        examples:
+            - name: example
+              manifest: |-
+                {
+                  "expires_at": "2099-12-31T23:59:59Z",
+                  "project_id": "${logfire_project.example.id}"
+                }
+              references:
+                project_id: logfire_project.example.id
+              dependencies:
+                logfire_project.example: |-
+                    {
+                      "name": "example-project"
+                    }
+        argumentDocs:
+            created_at: (String) Timestamp when the token was created.
+            created_by_name: (String) Display name of the user that created the token.
+            description: (String) Description is fixed to "Created by Public API" for provider-managed tokens.
+            expires_at: (String) Optional RFC3339 expiration timestamp for the token (for example 2026-12-31T23:59:59Z). If omitted, the token does not expire.
+            id: (String) Read token identifier.
+            project_id: (String) UUID of the project that owns the token.
+            project_name: (String) Name of the project that owns the token.
+            token: (String, Sensitive) The generated read token. Only returned on creation.
+            token_prefix: (String) Prefix of the generated read token.
+        importStatements: []
+    logfire_write_token:
+        subCategory: ""
+        description: Manages a Logfire write token.
+        name: logfire_write_token
+        title: logfire_write_token Resource - logfire
+        examples:
+            - name: example
+              manifest: |-
+                {
+                  "expires_at": "2099-12-31T23:59:59Z",
+                  "project_id": "${logfire_project.example.id}"
+                }
+              references:
+                project_id: logfire_project.example.id
+              dependencies:
+                logfire_project.example: |-
+                    {
+                      "name": "example-project"
+                    }
+        argumentDocs:
+            created_at: (String) Timestamp when the token was created.
+            created_by_name: (String) Display name of the user that created the token.
+            description: (String) Description is fixed to "Created by Public API" for provider-managed tokens.
+            expires_at: (String) Optional RFC3339 expiration timestamp for the token (for example 2026-12-31T23:59:59Z). If omitted, the token does not expire.
+            id: (String) Write token identifier.
+            project_id: (String) UUID of the project that owns the token.
+            project_name: (String) Name of the project that owns the token.
+            token: (String, Sensitive) The generated write token. Only returned on creation.
+            token_prefix: (String) Prefix of the generated write token.
+        importStatements: []

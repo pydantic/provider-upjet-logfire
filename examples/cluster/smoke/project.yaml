@@ -1,0 +1,11 @@
+apiVersion: project.logfire.pydantic.dev/v1alpha1
+kind: Project
+metadata:
+  name: smoke-project
+spec:
+  providerConfigRef:
+    name: default
+  forProvider:
+    name: smoke-project
+    description: Managed by provider-logfire smoke test
+    visibility: private
