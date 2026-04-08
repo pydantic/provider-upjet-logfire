@@ -20,6 +20,10 @@ type ChannelInitParameters struct {
 	// Whether the channel is active.
 	Active *bool `json:"active,omitempty" tf:"active,omitempty"`
 
+	// (Block, Optional) Required channel configuration. (see below for nested schema)
+	// Required channel configuration.
+	Config *ConfigInitParameters `json:"config,omitempty" tf:"config,omitempty"`
+
 	// (String) Channel name.
 	// Channel name.
 	Name *string `json:"name,omitempty" tf:"name,omitempty"`
@@ -33,7 +37,7 @@ type ChannelObservation struct {
 
 	// (Block, Optional) Required channel configuration. (see below for nested schema)
 	// Required channel configuration.
-	Config []ConfigObservation `json:"config,omitempty" tf:"config,omitempty"`
+	Config *ConfigObservation `json:"config,omitempty" tf:"config,omitempty"`
 
 	// (String) Channel ID.
 	ID *string `json:"id,omitempty" tf:"id,omitempty"`
@@ -49,6 +53,11 @@ type ChannelParameters struct {
 	// Whether the channel is active.
 	// +kubebuilder:validation:Optional
 	Active *bool `json:"active,omitempty" tf:"active,omitempty"`
+
+	// (Block, Optional) Required channel configuration. (see below for nested schema)
+	// Required channel configuration.
+	// +kubebuilder:validation:Optional
+	Config *ConfigParameters `json:"config,omitempty" tf:"config,omitempty"`
 
 	// (String) Channel name.
 	// Channel name.
@@ -149,6 +158,7 @@ type ChannelStatus struct {
 type Channel struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
+	// +kubebuilder:validation:XValidation:rule="!('*' in self.managementPolicies || 'Create' in self.managementPolicies || 'Update' in self.managementPolicies) || has(self.forProvider.config) || (has(self.initProvider) && has(self.initProvider.config))",message="spec.forProvider.config is a required parameter"
 	// +kubebuilder:validation:XValidation:rule="!('*' in self.managementPolicies || 'Create' in self.managementPolicies || 'Update' in self.managementPolicies) || has(self.forProvider.name) || (has(self.initProvider) && has(self.initProvider.name))",message="spec.forProvider.name is a required parameter"
 	Spec   ChannelSpec   `json:"spec"`
 	Status ChannelStatus `json:"status,omitempty"`

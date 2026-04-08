@@ -64,6 +64,41 @@ spec:
                       (Boolean) Whether the channel is active.
                       Whether the channel is active.
                     type: boolean
+                  config:
+                    description: |-
+                      (Block, Optional) Required channel configuration. (see below for nested schema)
+                      Required channel configuration.
+                    properties:
+                      authKeySecretRef:
+                        description: |-
+                          (String, Sensitive) Opsgenie API key.
+                          Opsgenie API key.
+                        properties:
+                          key:
+                            type: string
+                          name:
+                            description: Name of the secret.
+                            type: string
+                        required:
+                        - key
+                        - name
+                        type: object
+                      format:
+                        description: |-
+                          (String) Webhook payload format.
+                          Webhook payload format.
+                        type: string
+                      type:
+                        description: |-
+                          (String) Channel type (webhook or opsgenie).
+                          Channel type (`webhook` or `opsgenie`).
+                        type: string
+                      url:
+                        description: |-
+                          (String) Webhook URL endpoint.
+                          Webhook URL endpoint.
+                        type: string
+                    type: object
                   name:
                     description: |-
                       (String) Channel name.
@@ -88,6 +123,41 @@ spec:
                       (Boolean) Whether the channel is active.
                       Whether the channel is active.
                     type: boolean
+                  config:
+                    description: |-
+                      (Block, Optional) Required channel configuration. (see below for nested schema)
+                      Required channel configuration.
+                    properties:
+                      authKeySecretRef:
+                        description: |-
+                          (String, Sensitive) Opsgenie API key.
+                          Opsgenie API key.
+                        properties:
+                          key:
+                            type: string
+                          name:
+                            description: Name of the secret.
+                            type: string
+                        required:
+                        - key
+                        - name
+                        type: object
+                      format:
+                        description: |-
+                          (String) Webhook payload format.
+                          Webhook payload format.
+                        type: string
+                      type:
+                        description: |-
+                          (String) Channel type (webhook or opsgenie).
+                          Channel type (`webhook` or `opsgenie`).
+                        type: string
+                      url:
+                        description: |-
+                          (String) Webhook URL endpoint.
+                          Webhook URL endpoint.
+                        type: string
+                    type: object
                   name:
                     description: |-
                       (String) Channel name.
@@ -153,6 +223,10 @@ spec:
             - forProvider
             type: object
             x-kubernetes-validations:
+            - message: spec.forProvider.config is a required parameter
+              rule: '!(''*'' in self.managementPolicies || ''Create'' in self.managementPolicies
+                || ''Update'' in self.managementPolicies) || has(self.forProvider.config)
+                || (has(self.initProvider) && has(self.initProvider.config))'
             - message: spec.forProvider.name is a required parameter
               rule: '!(''*'' in self.managementPolicies || ''Create'' in self.managementPolicies
                 || ''Update'' in self.managementPolicies) || has(self.forProvider.name)
@@ -171,25 +245,23 @@ spec:
                     description: |-
                       (Block, Optional) Required channel configuration. (see below for nested schema)
                       Required channel configuration.
-                    items:
-                      properties:
-                        format:
-                          description: |-
-                            (String) Webhook payload format.
-                            Webhook payload format.
-                          type: string
-                        type:
-                          description: |-
-                            (String) Channel type (webhook or opsgenie).
-                            Channel type (`webhook` or `opsgenie`).
-                          type: string
-                        url:
-                          description: |-
-                            (String) Webhook URL endpoint.
-                            Webhook URL endpoint.
-                          type: string
-                      type: object
-                    type: array
+                    properties:
+                      format:
+                        description: |-
+                          (String) Webhook payload format.
+                          Webhook payload format.
+                        type: string
+                      type:
+                        description: |-
+                          (String) Channel type (webhook or opsgenie).
+                          Channel type (`webhook` or `opsgenie`).
+                        type: string
+                      url:
+                        description: |-
+                          (String) Webhook URL endpoint.
+                          Webhook URL endpoint.
+                        type: string
+                    type: object
                   id:
                     description: (String) Channel ID.
                     type: string

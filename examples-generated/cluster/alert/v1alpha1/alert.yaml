@@ -40,6 +40,10 @@ metadata:
   name: example
 spec:
   forProvider:
+    config:
+      format: auto
+      type: webhook
+      url: https://example.com/logfire-webhook
     name: alerts-webhook
 
 ---

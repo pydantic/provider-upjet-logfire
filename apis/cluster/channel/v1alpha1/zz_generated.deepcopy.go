@@ -48,6 +48,11 @@ func (in *ChannelInitParameters) DeepCopyInto(out *ChannelInitParameters) {
 		*out = new(bool)
 		**out = **in
 	}
+	if in.Config != nil {
+		in, out := &in.Config, &out.Config
+		*out = new(ConfigInitParameters)
+		(*in).DeepCopyInto(*out)
+	}
 	if in.Name != nil {
 		in, out := &in.Name, &out.Name
 		*out = new(string)
@@ -107,10 +112,8 @@ func (in *ChannelObservation) DeepCopyInto(out *ChannelObservation) {
 	}
 	if in.Config != nil {
 		in, out := &in.Config, &out.Config
-		*out = make([]ConfigObservation, len(*in))
-		for i := range *in {
-			(*in)[i].DeepCopyInto(&(*out)[i])
-		}
+		*out = new(ConfigObservation)
+		(*in).DeepCopyInto(*out)
 	}
 	if in.ID != nil {
 		in, out := &in.ID, &out.ID
@@ -141,6 +144,11 @@ func (in *ChannelParameters) DeepCopyInto(out *ChannelParameters) {
 		in, out := &in.Active, &out.Active
 		*out = new(bool)
 		**out = **in
+	}
+	if in.Config != nil {
+		in, out := &in.Config, &out.Config
+		*out = new(ConfigParameters)
+		(*in).DeepCopyInto(*out)
 	}
 	if in.Name != nil {
 		in, out := &in.Name, &out.Name

@@ -235,6 +235,35 @@ jobs:
       - name: Deploying locally built provider package
         run: make local-deploy
 
+  check-examples:
+    runs-on: ubuntu-24.04
+    needs: detect-noop
+    if: needs.detect-noop.outputs.noop != 'true'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          submodules: true
+
+      - name: Setup Go
+        uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6.1.0
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Cache Go Dependencies
+        uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.1
+        with:
+          path: .work/pkg
+          key: ${{ runner.os }}-pkg-${{ hashFiles('**/go.sum') }}
+          restore-keys: ${{ runner.os }}-pkg-
+
+      - name: Vendor Dependencies
+        run: make vendor vendor.check
+
+      - name: Check Example Manifests
+        run: make check-examples
+
   publish-artifacts:
     runs-on: ubuntu-24.04
     needs:
@@ -244,6 +273,7 @@ jobs:
       - check-diff
       - unit-tests
       - local-deploy
+      - check-examples
     if: needs.detect-noop.outputs.noop != 'true'
 
     steps:

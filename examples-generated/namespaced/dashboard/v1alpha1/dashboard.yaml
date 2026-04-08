@@ -9,7 +9,25 @@ metadata:
   namespace: crossplane-system
 spec:
   forProvider:
-    definition: ${file("${path.module}/dashboard.json")}
+    definition: |
+      {
+        "kind": "Dashboard",
+        "metadata": {
+          "name": "example-dashboard"
+        },
+        "spec": {
+          "display": {
+            "name": "example-dashboard",
+            "description": null
+          },
+          "panels": {},
+          "layouts": [],
+          "variables": [],
+          "duration": "1h",
+          "refreshInterval": "0s",
+          "datasources": {}
+        }
+      }
     name: example-dashboard
     projectIdSelector:
       matchLabels:

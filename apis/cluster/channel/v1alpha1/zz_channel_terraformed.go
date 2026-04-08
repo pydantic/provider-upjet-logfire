@@ -21,7 +21,7 @@ func (mg *Channel) GetTerraformResourceType() string {
 
 // GetConnectionDetailsMapping for this Channel
 func (tr *Channel) GetConnectionDetailsMapping() map[string]string {
-	return map[string]string{"config[*].auth_key": "config[*].authKeySecretRef"}
+	return map[string]string{"config.auth_key": "config.authKeySecretRef"}
 }
 
 // GetObservation of this Channel
