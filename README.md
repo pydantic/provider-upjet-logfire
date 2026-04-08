@@ -27,7 +27,7 @@ kind: Provider
 metadata:
   name: provider-upjet-logfire
 spec:
-  package: xpkg.crossplane.io/pydantic/provider-upjet-logfire:v0.2.0
+  package: xpkg.crossplane.io/pydantic/provider-upjet-logfire:v0.2.1
 ```
 
 ## Credentials
@@ -53,14 +53,25 @@ Generate code:
 make generate
 ```
 
-Run tests:
+Run the repo checks that gate CI:
 
 ```console
 go test ./...
+make check-examples
+make check-diff
 ```
 
-Build:
+Build and run the provider in a local Crossplane control plane:
 
 ```console
-go build ./...
+make local-deploy
+```
+
+Run end-to-end tests against a real Logfire account by providing the credentials
+payload expected by `cluster/test/setup.sh`:
+
+```console
+UPTEST_EXAMPLE_LIST=examples/cluster/smoke/project.yaml \
+UPTEST_CLOUD_CREDENTIALS='{"api_key":"pylf_v2_..."}' \
+make uptest
 ```
