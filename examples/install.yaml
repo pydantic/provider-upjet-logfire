@@ -3,4 +3,4 @@ kind: Provider
 metadata:
   name: provider-upjet-logfire
 spec:
-  package: xpkg.crossplane.io/pydantic/provider-upjet-logfire:v0.1.0
+  package: ghcr.io/pydantic/provider-upjet-logfire:v0.2.1

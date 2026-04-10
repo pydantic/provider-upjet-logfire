@@ -13,6 +13,10 @@ The current provider surface is intentionally small:
 
 ## Install
 
+Published provider packages are currently installed from GitHub Container Registry:
+
+`ghcr.io/pydantic/provider-upjet-logfire`
+
 For complete examples, see:
 - `examples/install.yaml`
 - `examples/cluster/providerconfig/providerconfig.yaml`
@@ -27,7 +31,7 @@ kind: Provider
 metadata:
   name: provider-upjet-logfire
 spec:
-  package: xpkg.crossplane.io/pydantic/provider-upjet-logfire:v0.2.1
+  package: ghcr.io/pydantic/provider-upjet-logfire:v0.2.1
 ```
 
 ## Credentials
