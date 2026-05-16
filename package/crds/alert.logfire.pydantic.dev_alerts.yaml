@@ -171,7 +171,7 @@ spec:
                   frequency:
                     description: |-
                       (String) Evaluation frequency as Go duration.
-                      Evaluation frequency as Go duration.
+                      Evaluation frequency. Allowed values: 1m, 2m, 5m, 10m, 15m, 30m, 1h, 6h, 12h, 24h.
                     type: string
                   name:
                     description: |-
@@ -270,7 +270,7 @@ spec:
                   timeWindow:
                     description: |-
                       (String) Lookback window as Go duration.
-                      Lookback window as Go duration.
+                      Lookback window. Allowed values: 1m, 2m, 5m, 10m, 15m, 30m, 1h, 6h, 12h, 24h, 7d, 30d.
                     type: string
                 type: object
               initProvider:
@@ -385,7 +385,7 @@ spec:
                   frequency:
                     description: |-
                       (String) Evaluation frequency as Go duration.
-                      Evaluation frequency as Go duration.
+                      Evaluation frequency. Allowed values: 1m, 2m, 5m, 10m, 15m, 30m, 1h, 6h, 12h, 24h.
                     type: string
                   name:
                     description: |-
@@ -484,7 +484,7 @@ spec:
                   timeWindow:
                     description: |-
                       (String) Lookback window as Go duration.
-                      Lookback window as Go duration.
+                      Lookback window. Allowed values: 1m, 2m, 5m, 10m, 15m, 30m, 1h, 6h, 12h, 24h, 7d, 30d.
                     type: string
                 type: object
               managementPolicies:
@@ -620,7 +620,7 @@ spec:
                   frequency:
                     description: |-
                       (String) Evaluation frequency as Go duration.
-                      Evaluation frequency as Go duration.
+                      Evaluation frequency. Allowed values: 1m, 2m, 5m, 10m, 15m, 30m, 1h, 6h, 12h, 24h.
                     type: string
                   id:
                     description: (String) Alert ID.
@@ -648,7 +648,7 @@ spec:
                   timeWindow:
                     description: |-
                       (String) Lookback window as Go duration.
-                      Lookback window as Go duration.
+                      Lookback window. Allowed values: 1m, 2m, 5m, 10m, 15m, 30m, 1h, 6h, 12h, 24h, 7d, 30d.
                     type: string
                   watermark:
                     description: |-
