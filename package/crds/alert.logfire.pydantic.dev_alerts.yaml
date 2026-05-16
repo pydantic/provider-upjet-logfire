@@ -170,7 +170,7 @@ spec:
                     type: string
                   frequency:
                     description: |-
-                      (String) Evaluation frequency as Go duration.
+                      (String) Evaluation frequency. Allowed values: 1m, 2m, 5m, 10m, 15m, 30m, 1h, 6h, 12h, 24h.
                       Evaluation frequency. Allowed values: 1m, 2m, 5m, 10m, 15m, 30m, 1h, 6h, 12h, 24h.
                     type: string
                   name:
@@ -269,7 +269,7 @@ spec:
                     type: string
                   timeWindow:
                     description: |-
-                      (String) Lookback window as Go duration.
+                      (String) Lookback window. Allowed values: 1m, 2m, 5m, 10m, 15m, 30m, 1h, 6h, 12h, 24h, 7d, 30d.
                       Lookback window. Allowed values: 1m, 2m, 5m, 10m, 15m, 30m, 1h, 6h, 12h, 24h, 7d, 30d.
                     type: string
                 type: object
@@ -384,7 +384,7 @@ spec:
                     type: string
                   frequency:
                     description: |-
-                      (String) Evaluation frequency as Go duration.
+                      (String) Evaluation frequency. Allowed values: 1m, 2m, 5m, 10m, 15m, 30m, 1h, 6h, 12h, 24h.
                       Evaluation frequency. Allowed values: 1m, 2m, 5m, 10m, 15m, 30m, 1h, 6h, 12h, 24h.
                     type: string
                   name:
@@ -483,7 +483,7 @@ spec:
                     type: string
                   timeWindow:
                     description: |-
-                      (String) Lookback window as Go duration.
+                      (String) Lookback window. Allowed values: 1m, 2m, 5m, 10m, 15m, 30m, 1h, 6h, 12h, 24h, 7d, 30d.
                       Lookback window. Allowed values: 1m, 2m, 5m, 10m, 15m, 30m, 1h, 6h, 12h, 24h, 7d, 30d.
                     type: string
                 type: object
@@ -619,7 +619,7 @@ spec:
                     type: string
                   frequency:
                     description: |-
-                      (String) Evaluation frequency as Go duration.
+                      (String) Evaluation frequency. Allowed values: 1m, 2m, 5m, 10m, 15m, 30m, 1h, 6h, 12h, 24h.
                       Evaluation frequency. Allowed values: 1m, 2m, 5m, 10m, 15m, 30m, 1h, 6h, 12h, 24h.
                     type: string
                   id:
@@ -647,7 +647,7 @@ spec:
                     type: string
                   timeWindow:
                     description: |-
-                      (String) Lookback window as Go duration.
+                      (String) Lookback window. Allowed values: 1m, 2m, 5m, 10m, 15m, 30m, 1h, 6h, 12h, 24h, 7d, 30d.
                       Lookback window. Allowed values: 1m, 2m, 5m, 10m, 15m, 30m, 1h, 6h, 12h, 24h, 7d, 30d.
                     type: string
                   watermark:

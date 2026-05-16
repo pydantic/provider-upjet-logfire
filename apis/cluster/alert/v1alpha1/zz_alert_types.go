@@ -39,7 +39,7 @@ type AlertInitParameters struct {
 	// Alert description.
 	Description *string `json:"description,omitempty" tf:"description,omitempty"`
 
-	// (String) Evaluation frequency as Go duration.
+	// (String) Evaluation frequency. Allowed values: 1m, 2m, 5m, 10m, 15m, 30m, 1h, 6h, 12h, 24h.
 	// Evaluation frequency. Allowed values: 1m, 2m, 5m, 10m, 15m, 30m, 1h, 6h, 12h, 24h.
 	Frequency *string `json:"frequency,omitempty" tf:"frequency,omitempty"`
 
@@ -68,7 +68,7 @@ type AlertInitParameters struct {
 	// SQL / query string used by the alert.
 	Query *string `json:"query,omitempty" tf:"query,omitempty"`
 
-	// (String) Lookback window as Go duration.
+	// (String) Lookback window. Allowed values: 1m, 2m, 5m, 10m, 15m, 30m, 1h, 6h, 12h, 24h, 7d, 30d.
 	// Lookback window. Allowed values: 1m, 2m, 5m, 10m, 15m, 30m, 1h, 6h, 12h, 24h, 7d, 30d.
 	TimeWindow *string `json:"timeWindow,omitempty" tf:"time_window,omitempty"`
 }
@@ -88,7 +88,7 @@ type AlertObservation struct {
 	// Alert description.
 	Description *string `json:"description,omitempty" tf:"description,omitempty"`
 
-	// (String) Evaluation frequency as Go duration.
+	// (String) Evaluation frequency. Allowed values: 1m, 2m, 5m, 10m, 15m, 30m, 1h, 6h, 12h, 24h.
 	// Evaluation frequency. Allowed values: 1m, 2m, 5m, 10m, 15m, 30m, 1h, 6h, 12h, 24h.
 	Frequency *string `json:"frequency,omitempty" tf:"frequency,omitempty"`
 
@@ -111,7 +111,7 @@ type AlertObservation struct {
 	// SQL / query string used by the alert.
 	Query *string `json:"query,omitempty" tf:"query,omitempty"`
 
-	// (String) Lookback window as Go duration.
+	// (String) Lookback window. Allowed values: 1m, 2m, 5m, 10m, 15m, 30m, 1h, 6h, 12h, 24h, 7d, 30d.
 	// Lookback window. Allowed values: 1m, 2m, 5m, 10m, 15m, 30m, 1h, 6h, 12h, 24h, 7d, 30d.
 	TimeWindow *string `json:"timeWindow,omitempty" tf:"time_window,omitempty"`
 
@@ -149,7 +149,7 @@ type AlertParameters struct {
 	// +kubebuilder:validation:Optional
 	Description *string `json:"description,omitempty" tf:"description,omitempty"`
 
-	// (String) Evaluation frequency as Go duration.
+	// (String) Evaluation frequency. Allowed values: 1m, 2m, 5m, 10m, 15m, 30m, 1h, 6h, 12h, 24h.
 	// Evaluation frequency. Allowed values: 1m, 2m, 5m, 10m, 15m, 30m, 1h, 6h, 12h, 24h.
 	// +kubebuilder:validation:Optional
 	Frequency *string `json:"frequency,omitempty" tf:"frequency,omitempty"`
@@ -183,7 +183,7 @@ type AlertParameters struct {
 	// +kubebuilder:validation:Optional
 	Query *string `json:"query,omitempty" tf:"query,omitempty"`
 
-	// (String) Lookback window as Go duration.
+	// (String) Lookback window. Allowed values: 1m, 2m, 5m, 10m, 15m, 30m, 1h, 6h, 12h, 24h, 7d, 30d.
 	// Lookback window. Allowed values: 1m, 2m, 5m, 10m, 15m, 30m, 1h, 6h, 12h, 24h, 7d, 30d.
 	// +kubebuilder:validation:Optional
 	TimeWindow *string `json:"timeWindow,omitempty" tf:"time_window,omitempty"`
