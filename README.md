@@ -31,7 +31,7 @@ kind: Provider
 metadata:
   name: provider-upjet-logfire
 spec:
-  package: ghcr.io/pydantic/provider-upjet-logfire:v0.2.1
+  package: ghcr.io/pydantic/provider-upjet-logfire:v0.2.2
 ```
 
 ## Credentials
@@ -50,6 +50,9 @@ Example secret payload:
 ```
 
 ## Developing
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full provider update workflow,
+including generated docs/schema rules and the `.work/pydantic/logfire` cache
+pitfall.
 
 Generate code:
 
