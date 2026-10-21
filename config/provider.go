@@ -54,7 +54,6 @@ func GetProvider() *ujconfig.Provider {
 	}
 
 	pc.ConfigureResources()
-	normalizeChannelSensitivePaths(pc)
 	return pc
 }
 
@@ -84,15 +83,5 @@ func GetProviderNamespaced() *ujconfig.Provider {
 	}
 
 	pc.ConfigureResources()
-	normalizeChannelSensitivePaths(pc)
 	return pc
-}
-
-func normalizeChannelSensitivePaths(p *ujconfig.Provider) {
-	r := p.Resources["logfire_channel"]
-	if r == nil {
-		return
-	}
-	delete(r.Sensitive.GetFieldPaths(), "config[*].auth_key")
-	r.Sensitive.AddFieldPath("config.auth_key", "config.authKeySecretRef")
 }

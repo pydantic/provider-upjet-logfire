@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 
 	ujconfig "github.com/crossplane/upjet/v2/pkg/config"
@@ -37,6 +36,12 @@ func run(rootDir string) error {
 	if err := fixGeneratedChannelConnectionDetails(absRootDir); err != nil {
 		return err
 	}
+	if err := fixGeneratedAlertExamples(absRootDir); err != nil {
+		return err
+	}
+	if err := fixGeneratedTokenExamples(absRootDir); err != nil {
+		return err
+	}
 	if err := fixGeneratedDashboardExamples(absRootDir); err != nil {
 		return err
 	}
@@ -62,7 +67,10 @@ func applyExampleConversions(rootDir string, pc, pns *ujconfig.Provider) error {
 }
 
 func fixGeneratedChannelConnectionDetails(rootDir string) error {
-	wildcardAuthKeyPattern := regexp.MustCompile(`,\s*"config\[\*\]\.auth_key": "config\.authKeySecretRef"|"config\[\*\]\.auth_key": "config\.authKeySecretRef",\s*`)
+	const (
+		wildcardConfigPath = "config[*]."
+		objectConfigPath   = "config."
+	)
 
 	for _, rel := range []string{
 		filepath.Join("apis", "cluster", "channel", "v1alpha1", "zz_channel_terraformed.go"),
@@ -75,12 +83,78 @@ func fixGeneratedChannelConnectionDetails(rootDir string) error {
 			return fmt.Errorf("cannot read generated channel terraformed file %s: %w", path, err)
 		}
 
-		updated := wildcardAuthKeyPattern.ReplaceAllString(string(content), "")
+		updated := strings.ReplaceAll(string(content), wildcardConfigPath, objectConfigPath)
 		if updated == string(content) {
 			continue
 		}
 		if err := os.WriteFile(path, []byte(updated), 0o600); err != nil {
 			return fmt.Errorf("cannot rewrite generated channel terraformed file %s: %w", path, err)
+		}
+	}
+	return nil
+}
+
+// fixGeneratedTokenExamples adds the connection secret ref that makes a token
+// usable. Upjet keeps the generated token out of status and writes it to this
+// secret under the attribute.token key.
+func fixGeneratedTokenExamples(rootDir string) error {
+	for _, example := range []struct {
+		path       string
+		secretName string
+	}{
+		{filepath.Join("examples-generated", "cluster", "token", "v1alpha1", "readtoken.yaml"), "example-read-token"},
+		{filepath.Join("examples-generated", "cluster", "token", "v1alpha1", "writetoken.yaml"), "example-write-token"},
+		{filepath.Join("examples-generated", "namespaced", "token", "v1alpha1", "readtoken.yaml"), "example-read-token"},
+		{filepath.Join("examples-generated", "namespaced", "token", "v1alpha1", "writetoken.yaml"), "example-write-token"},
+	} {
+		path := filepath.Join(rootDir, example.path)
+		// #nosec G304 -- path is built from known generated file locations inside the repo root.
+		content, err := os.ReadFile(path)
+		if err != nil {
+			return fmt.Errorf("cannot read generated token example %s: %w", path, err)
+		}
+
+		replacement := "spec:\n  writeConnectionSecretToRef:\n    name: " + example.secretName + "\n    namespace: crossplane-system\n  forProvider:"
+		updated := strings.Replace(string(content), "spec:\n  forProvider:", replacement, 1)
+		if updated == string(content) {
+			continue
+		}
+		if err := os.WriteFile(path, []byte(updated), 0o600); err != nil {
+			return fmt.Errorf("cannot rewrite generated token example %s: %w", path, err)
+		}
+	}
+	return nil
+}
+
+// fixGeneratedAlertExamples drops Terraform interpolation that names a
+// resource this provider does not generate. A schedule ID is a plain string
+// here, so an unresolved ${logfire_schedule...} value would reach the API.
+func fixGeneratedAlertExamples(rootDir string) error {
+	for _, rel := range []string{
+		filepath.Join("examples-generated", "cluster", "alert", "v1alpha1", "alert.yaml"),
+		filepath.Join("examples-generated", "namespaced", "alert", "v1alpha1", "alert.yaml"),
+	} {
+		path := filepath.Join(rootDir, rel)
+		// #nosec G304 -- path is built from known generated file locations inside the repo root.
+		content, err := os.ReadFile(path)
+		if err != nil {
+			return fmt.Errorf("cannot read generated alert example %s: %w", path, err)
+		}
+
+		lines := strings.Split(string(content), "\n")
+		kept := make([]string, 0, len(lines))
+		for _, line := range lines {
+			if strings.Contains(line, "scheduleId: ${") {
+				continue
+			}
+			kept = append(kept, line)
+		}
+		updated := strings.Join(kept, "\n")
+		if updated == string(content) {
+			continue
+		}
+		if err := os.WriteFile(path, []byte(updated), 0o600); err != nil {
+			return fmt.Errorf("cannot rewrite generated alert example %s: %w", path, err)
 		}
 	}
 	return nil

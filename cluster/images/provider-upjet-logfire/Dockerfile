@@ -30,6 +30,14 @@ ADD https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TE
 ADD ${TERRAFORM_PROVIDER_DOWNLOAD_URL_PREFIX}/${TERRAFORM_PROVIDER_DOWNLOAD_NAME}_${TERRAFORM_PROVIDER_VERSION}_${TARGETOS}_${TARGETARCH}.zip /tmp
 ADD terraformrc.hcl ${TF_CLI_CONFIG_FILE}
 
+RUN set -eux; \
+  wget -q -O /tmp/terraform_SHA256SUMS https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_SHA256SUMS; \
+  grep " terraform_${TERRAFORM_VERSION}_${TARGETOS}_${TARGETARCH}.zip" /tmp/terraform_SHA256SUMS > /tmp/terraform.sum; \
+  wget -q -O /tmp/provider_SHA256SUMS ${TERRAFORM_PROVIDER_DOWNLOAD_URL_PREFIX}/${TERRAFORM_PROVIDER_DOWNLOAD_NAME}_${TERRAFORM_PROVIDER_VERSION}_SHA256SUMS; \
+  grep " ${TERRAFORM_PROVIDER_DOWNLOAD_NAME}_${TERRAFORM_PROVIDER_VERSION}_${TARGETOS}_${TARGETARCH}.zip" /tmp/provider_SHA256SUMS > /tmp/provider.sum; \
+  cd /tmp && sha256sum -c terraform.sum && sha256sum -c provider.sum; \
+  rm /tmp/terraform_SHA256SUMS /tmp/provider_SHA256SUMS /tmp/terraform.sum /tmp/provider.sum
+
 RUN unzip /tmp/terraform_${TERRAFORM_VERSION}_${TARGETOS}_${TARGETARCH}.zip -d /usr/local/bin \
   && chmod +x /usr/local/bin/terraform \
   && rm /tmp/terraform_${TERRAFORM_VERSION}_${TARGETOS}_${TARGETARCH}.zip \

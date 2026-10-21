@@ -88,7 +88,7 @@ func TestFixGeneratedChannelConnectionDetails(t *testing.T) {
 		}
 		path := filepath.Join(dir, "zz_channel_terraformed.go")
 		content := `func (tr *Channel) GetConnectionDetailsMapping() map[string]string {
-	return map[string]string{"config.auth_key": "config.authKeySecretRef", "config[*].auth_key": "config.authKeySecretRef"}
+	return map[string]string{"config[*].auth_key": "config.authKeySecretRef", "config[*].routing_key": "config.routingKeySecretRef"}
 }
 `
 		if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
@@ -107,11 +107,104 @@ func TestFixGeneratedChannelConnectionDetails(t *testing.T) {
 			t.Fatalf("failed to read %s: %v", path, err)
 		}
 		got := string(content)
-		if strings.Contains(got, `config[*].auth_key`) {
-			t.Fatalf("%s still contains stale wildcard auth_key mapping: %s", scope, got)
+		if strings.Contains(got, `config[*].`) {
+			t.Fatalf("%s still contains a wildcard config mapping: %s", scope, got)
 		}
-		if !strings.Contains(got, `config.auth_key`) {
-			t.Fatalf("%s lost the object auth_key mapping: %s", scope, got)
+		for _, want := range []string{`config.auth_key`, `config.routing_key`} {
+			if !strings.Contains(got, want) {
+				t.Fatalf("%s lost the %s mapping: %s", scope, want, got)
+			}
+		}
+	}
+}
+
+func TestFixGeneratedTokenExamples(t *testing.T) {
+	root := t.TempDir()
+	examples := map[string]string{
+		"cluster/token/v1alpha1/readtoken.yaml":     "example-read-token",
+		"cluster/token/v1alpha1/writetoken.yaml":    "example-write-token",
+		"namespaced/token/v1alpha1/readtoken.yaml":  "example-read-token",
+		"namespaced/token/v1alpha1/writetoken.yaml": "example-write-token",
+	}
+	for rel := range examples {
+		path := filepath.Join(root, "examples-generated", rel)
+		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+			t.Fatalf("failed to create %s: %v", path, err)
+		}
+		content := `apiVersion: token.logfire.pydantic.dev/v1alpha1
+kind: WriteToken
+metadata:
+  name: example
+spec:
+  forProvider:
+    expiresAt: "2099-12-31T23:59:59Z"
+`
+		if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
+			t.Fatalf("failed to write %s: %v", path, err)
+		}
+	}
+
+	if err := fixGeneratedTokenExamples(root); err != nil {
+		t.Fatalf("fixGeneratedTokenExamples() failed: %v", err)
+	}
+
+	for rel, secretName := range examples {
+		path := filepath.Join(root, "examples-generated", rel)
+		content, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatalf("failed to read %s: %v", path, err)
+		}
+		got := string(content)
+		for _, want := range []string{"writeConnectionSecretToRef:", "name: " + secretName, "namespace: crossplane-system"} {
+			if !strings.Contains(got, want) {
+				t.Fatalf("%s is missing %q: %s", rel, want, got)
+			}
+		}
+	}
+}
+
+func TestFixGeneratedAlertExamples(t *testing.T) {
+	root := t.TempDir()
+	for _, scope := range []string{"cluster", "namespaced"} {
+		dir := filepath.Join(root, "examples-generated", scope, "alert", "v1alpha1")
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			t.Fatalf("failed to create %s: %v", dir, err)
+		}
+		path := filepath.Join(dir, "alert.yaml")
+		content := `apiVersion: alert.logfire.pydantic.dev/v1alpha1
+kind: Alert
+spec:
+  forProvider:
+    channelAssignments:
+    - channelIdSelector:
+        matchLabels:
+          testing.upbound.io/example-name: example
+    - channelIdSelector:
+        matchLabels:
+          testing.upbound.io/example-name: office
+      scheduleId: ${logfire_schedule.office_hours.id}
+`
+		if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
+			t.Fatalf("failed to write %s: %v", path, err)
+		}
+	}
+
+	if err := fixGeneratedAlertExamples(root); err != nil {
+		t.Fatalf("fixGeneratedAlertExamples() failed: %v", err)
+	}
+
+	for _, scope := range []string{"cluster", "namespaced"} {
+		path := filepath.Join(root, "examples-generated", scope, "alert", "v1alpha1", "alert.yaml")
+		content, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatalf("failed to read %s: %v", path, err)
+		}
+		got := string(content)
+		if strings.Contains(got, "${logfire_schedule") {
+			t.Fatalf("%s example still contains a Terraform schedule reference: %s", scope, got)
+		}
+		if !strings.Contains(got, "office") {
+			t.Fatalf("%s example lost the second channel assignment: %s", scope, got)
 		}
 	}
 }

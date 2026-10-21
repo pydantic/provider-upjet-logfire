@@ -116,7 +116,7 @@ type ReadTokenStatus struct {
 // +kubebuilder:subresource:status
 // +kubebuilder:storageversion
 
-// ReadToken is the Schema for the ReadTokens API. Manages a Logfire read token.
+// ReadToken is the Schema for the ReadTokens API. Manages a Logfire read token. Equivalent to logfire_api_key with scopes ["project:read_otlp"]. Creating it requires the project:read_token scope on a credential that can reach the project. Import is not supported: the API returns the token value only at creation, so an imported token could never reproduce its secret in state.
 // +kubebuilder:printcolumn:name="SYNCED",type="string",JSONPath=".status.conditions[?(@.type=='Synced')].status"
 // +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="EXTERNAL-NAME",type="string",JSONPath=".metadata.annotations.crossplane\\.io/external-name"

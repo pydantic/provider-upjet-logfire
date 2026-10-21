@@ -12,10 +12,10 @@ TERRAFORM_VERSION_VALID := $(shell [ "$(TERRAFORM_VERSION)" = "`printf "$(TERRAF
 
 export TERRAFORM_PROVIDER_SOURCE ?= pydantic/logfire
 export TERRAFORM_PROVIDER_REPO ?= https://github.com/pydantic/terraform-provider-logfire
-export TERRAFORM_PROVIDER_VERSION ?= 0.1.8
+export TERRAFORM_PROVIDER_VERSION ?= 0.2.3
 export TERRAFORM_PROVIDER_DOWNLOAD_NAME ?= terraform-provider-logfire
 export TERRAFORM_PROVIDER_DOWNLOAD_URL_PREFIX ?= https://github.com/pydantic/terraform-provider-logfire/releases/download/v$(TERRAFORM_PROVIDER_VERSION)
-export TERRAFORM_NATIVE_PROVIDER_BINARY ?= terraform-provider-logfire_v0.1.8
+export TERRAFORM_NATIVE_PROVIDER_BINARY ?= $(TERRAFORM_PROVIDER_DOWNLOAD_NAME)_v$(TERRAFORM_PROVIDER_VERSION)
 export TERRAFORM_DOCS_PATH ?= docs/resources
 
 
@@ -42,7 +42,7 @@ PLATFORMS ?= linux_amd64 linux_arm64
 GO_TEST_PARALLEL := $(shell n="$(if $(strip $(NPROCS)),$(strip $(NPROCS)),1)"; p=$$(( n / 2 )); if [ $$p -lt 1 ]; then p=1; fi; echo $$p)
 
 GO_REQUIRED_VERSION ?= 1.27.3
-GOLANGCILINT_VERSION ?= 2.7.2
+GOLANGCILINT_VERSION ?= 2.15.0
 GO_STATIC_PACKAGES = $(GO_PROJECT)/cmd/provider $(GO_PROJECT)/cmd/generator
 GO_LDFLAGS += -X $(GO_PROJECT)/internal/version.Version=$(VERSION)
 GO_SUBDIRS += cmd internal apis
@@ -116,13 +116,48 @@ $(TERRAFORM): check-terraform-version
 	@rm -fr $(TOOLS_HOST_DIR)/tmp-terraform
 	@$(OK) installing terraform $(HOSTOS)-$(HOSTARCH)
 
-$(TERRAFORM_PROVIDER_SCHEMA): $(TERRAFORM)
+# The provider schema comes from the same release asset the image bundles. A
+# filesystem mirror keeps generation independent of the Terraform Registry,
+# which lags a release, and makes the recorded schema prove which binary it
+# describes.
+TERRAFORM_PROVIDER_ZIP := $(WORK_DIR)/$(TERRAFORM_PROVIDER_DOWNLOAD_NAME)_$(TERRAFORM_PROVIDER_VERSION)_$(SAFEHOST_PLATFORM).zip
+TERRAFORM_PROVIDER_SUMS := $(WORK_DIR)/$(TERRAFORM_PROVIDER_DOWNLOAD_NAME)_$(TERRAFORM_PROVIDER_VERSION)_SHA256SUMS
+TERRAFORM_PROVIDER_MIRROR := $(WORK_DIR)/provider-mirror
+TERRAFORM_PROVIDER_PLUGIN_DIR := $(TERRAFORM_PROVIDER_MIRROR)/registry.terraform.io/$(TERRAFORM_PROVIDER_SOURCE)/$(TERRAFORM_PROVIDER_VERSION)/$(SAFEHOST_PLATFORM)
+TERRAFORM_CLI_CONFIG := $(WORK_DIR)/terraformrc
+
+$(TERRAFORM_PROVIDER_SUMS):
+	@$(INFO) downloading checksums for $(TERRAFORM_PROVIDER_DOWNLOAD_NAME) $(TERRAFORM_PROVIDER_VERSION)
+	@mkdir -p $(WORK_DIR)
+	@curl -fsSL -o $@.tmp $(TERRAFORM_PROVIDER_DOWNLOAD_URL_PREFIX)/$(notdir $@)
+	@mv $@.tmp $@
+	@$(OK) downloading checksums for $(TERRAFORM_PROVIDER_DOWNLOAD_NAME) $(TERRAFORM_PROVIDER_VERSION)
+
+$(TERRAFORM_PROVIDER_ZIP): $(TERRAFORM_PROVIDER_SUMS)
+	@$(INFO) downloading $(TERRAFORM_PROVIDER_DOWNLOAD_NAME) $(TERRAFORM_PROVIDER_VERSION) for $(SAFEHOST_PLATFORM)
+	@curl -fsSL -o $@.tmp $(TERRAFORM_PROVIDER_DOWNLOAD_URL_PREFIX)/$(notdir $@)
+	@cd $(WORK_DIR) && sum=$$(grep ' $(notdir $@)$$' $(notdir $(TERRAFORM_PROVIDER_SUMS)) | awk '{print $$1}'); \
+		if [ -z "$$sum" ]; then echo "error: no checksum for $(notdir $@)"; exit 1; fi; \
+		echo "$$sum  $(notdir $@).tmp" | shasum -a 256 -c -
+	@mv $@.tmp $@
+	@$(OK) downloading $(TERRAFORM_PROVIDER_DOWNLOAD_NAME) $(TERRAFORM_PROVIDER_VERSION) for $(SAFEHOST_PLATFORM)
+
+$(TERRAFORM_PROVIDER_PLUGIN_DIR): $(TERRAFORM_PROVIDER_ZIP)
+	@mkdir -p $@
+	@unzip -o -q $(TERRAFORM_PROVIDER_ZIP) -d $@
+	@chmod +x $@/*
+
+$(TERRAFORM_CLI_CONFIG):
+	@mkdir -p $(WORK_DIR)
+	@printf 'provider_installation {\n  filesystem_mirror {\n    path    = "%s"\n    include = ["*/*"]\n  }\n  direct {\n    exclude = ["*/*"]\n  }\n}\n' "$(abspath $(TERRAFORM_PROVIDER_MIRROR))" > $@
+
+$(TERRAFORM_PROVIDER_SCHEMA): $(TERRAFORM) $(TERRAFORM_CLI_CONFIG) $(TERRAFORM_PROVIDER_PLUGIN_DIR)
 	@$(INFO) generating provider schema for $(TERRAFORM_PROVIDER_SOURCE) $(TERRAFORM_PROVIDER_VERSION)
 	@mkdir -p $(TERRAFORM_WORKDIR)
 	@rm -rf $(TERRAFORM_WORKDIR)/.terraform $(TERRAFORM_WORKDIR)/.terraform.lock.hcl
 	@echo '{"terraform":[{"required_providers":[{"provider":{"source":"'"$(TERRAFORM_PROVIDER_SOURCE)"'","version":"'"$(TERRAFORM_PROVIDER_VERSION)"'"}}],"required_version":"'"$(TERRAFORM_VERSION)"'"}]}' > $(TERRAFORM_WORKDIR)/main.tf.json
-	@$(TERRAFORM) -chdir=$(TERRAFORM_WORKDIR) init > $(TERRAFORM_WORKDIR)/terraform-logs.txt 2>&1
-	@$(TERRAFORM) -chdir=$(TERRAFORM_WORKDIR) providers schema -json=true > $(TERRAFORM_PROVIDER_SCHEMA) 2>> $(TERRAFORM_WORKDIR)/terraform-logs.txt
+	@TF_CLI_CONFIG_FILE=$(abspath $(TERRAFORM_CLI_CONFIG)) $(TERRAFORM) -chdir=$(TERRAFORM_WORKDIR) init > $(TERRAFORM_WORKDIR)/terraform-logs.txt 2>&1
+	@TF_CLI_CONFIG_FILE=$(abspath $(TERRAFORM_CLI_CONFIG)) $(TERRAFORM) -chdir=$(TERRAFORM_WORKDIR) providers schema -json=true > $(TERRAFORM_PROVIDER_SCHEMA) 2>> $(TERRAFORM_WORKDIR)/terraform-logs.txt
 	@$(OK) generating provider schema for $(TERRAFORM_PROVIDER_SOURCE) $(TERRAFORM_PROVIDER_VERSION)
 
 pull-docs:
@@ -194,6 +229,25 @@ check-examples:
 	@$(GO) run ./cmd/checkexamples ./package/crds ./examples-generated ./examples || $(FAIL)
 	@$(OK) checking example manifests
 
+# The image bundles a prebuilt Terraform provider, so its Go toolchain is not
+# set by this repository's build. The upstream release must be built with a Go
+# version that still receives crypto/x509 security fixes. See CVE-2026-111943.
+TERRAFORM_PROVIDER_MIN_GO ?= 1.27
+verify-native-provider: $(TERRAFORM_PROVIDER_PLUGIN_DIR)
+	@$(INFO) checking embedded $(TERRAFORM_PROVIDER_DOWNLOAD_NAME) toolchain
+	@got=$$($(GO) version -m $(TERRAFORM_PROVIDER_PLUGIN_DIR)/$(TERRAFORM_NATIVE_PROVIDER_BINARY) | awk 'NR==1 {sub(/^go/, "", $$2); print $$2}'); \
+	if [ -z "$$got" ]; then \
+		echo "error: cannot read the Go version of the embedded Terraform provider"; exit 1; \
+	fi; \
+	if ! awk -v got="$$got" -v min="$(TERRAFORM_PROVIDER_MIN_GO)" 'BEGIN { \
+		split(got, g, "."); split(min, m, "."); \
+		exit !(g[1] > m[1] || (g[1] == m[1] && g[2] >= m[2])); \
+	}'; then \
+		echo "error: embedded Terraform provider was built with go$$got, minimum is go$(TERRAFORM_PROVIDER_MIN_GO)"; exit 1; \
+	fi; \
+	echo "embedded Terraform provider built with go$$got"
+	@$(OK) checking embedded $(TERRAFORM_PROVIDER_DOWNLOAD_NAME) toolchain
+
 local-deploy: build controlplane.up local.xpkg.deploy.provider.$(PROJECT_NAME)
 	@$(INFO) running locally built provider
 	@$(KUBECTL) wait provider.pkg $(PROJECT_NAME) --for condition=Healthy --timeout 5m
@@ -233,7 +287,7 @@ schema-version-diff:
 	python3 ./scripts/version_diff.py config/generated.lst "$(WORK_DIR)/schema.json.$${PREV_PROVIDER_VERSION}" config/schema.json
 	@$(OK) Checking for native state schema version changes
 
-.PHONY: cobertura submodules fallthrough run crds.clean
+.PHONY: cobertura submodules fallthrough run crds.clean verify-native-provider
 
 # ====================================================================================
 # Special Targets

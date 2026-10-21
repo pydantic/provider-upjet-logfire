@@ -116,7 +116,7 @@ type WriteTokenStatus struct {
 // +kubebuilder:subresource:status
 // +kubebuilder:storageversion
 
-// WriteToken is the Schema for the WriteTokens API. Manages a Logfire write token.
+// WriteToken is the Schema for the WriteTokens API. Manages a Logfire write token. Equivalent to logfire_api_key with scopes ["project:write_otlp"]. Creating it requires the project:write_token scope on a credential that can reach the project. Import is not supported: the API returns the token value only at creation, so an imported token could never reproduce its secret in state.
 // +kubebuilder:printcolumn:name="SYNCED",type="string",JSONPath=".status.conditions[?(@.type=='Synced')].status"
 // +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="EXTERNAL-NAME",type="string",JSONPath=".metadata.annotations.crossplane\\.io/external-name"
