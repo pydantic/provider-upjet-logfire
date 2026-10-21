@@ -86,6 +86,7 @@ linters:
       - linters:
           - dupl
           - errcheck
+          - goconst
           - gocyclo
           - gosec
           - scopelint
@@ -107,6 +108,11 @@ linters:
       - linters:
           - gosec
         text: 'G104:'
+      # The generator and example checker read repository paths, not untrusted input.
+      - linters:
+          - gosec
+        path: cmd/(checkexamples|generator)/
+        text: 'G(703|122):'
     paths:
       - zz_\..+\.go$
       - third_party$
