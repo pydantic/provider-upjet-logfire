@@ -10,6 +10,16 @@ updates:
       go-dependencies:
         patterns:
           - "*"
+    ignore:
+      # These modules move with crossplane-runtime and upjet. A minor bump of
+      # the Kubernetes modules breaks crossplane-runtime v2.1.0, so upgrade them
+      # together with the sibling dependencies in a deliberate change.
+      - dependency-name: "k8s.io/*"
+        update-types: ["version-update:semver-minor", "version-update:semver-major"]
+      - dependency-name: "sigs.k8s.io/controller-runtime"
+        update-types: ["version-update:semver-minor", "version-update:semver-major"]
+      - dependency-name: "sigs.k8s.io/controller-tools"
+        update-types: ["version-update:semver-minor", "version-update:semver-major"]
 
   - package-ecosystem: github-actions
     directory: /
