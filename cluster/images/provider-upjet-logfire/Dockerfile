@@ -35,7 +35,9 @@ RUN set -eux; \
   grep " terraform_${TERRAFORM_VERSION}_${TARGETOS}_${TARGETARCH}.zip" /tmp/terraform_SHA256SUMS > /tmp/terraform.sum; \
   wget -q -O /tmp/provider_SHA256SUMS ${TERRAFORM_PROVIDER_DOWNLOAD_URL_PREFIX}/${TERRAFORM_PROVIDER_DOWNLOAD_NAME}_${TERRAFORM_PROVIDER_VERSION}_SHA256SUMS; \
   grep " ${TERRAFORM_PROVIDER_DOWNLOAD_NAME}_${TERRAFORM_PROVIDER_VERSION}_${TARGETOS}_${TARGETARCH}.zip" /tmp/provider_SHA256SUMS > /tmp/provider.sum; \
-  cd /tmp && sha256sum -c terraform.sum && sha256sum -c provider.sum; \
+  cd /tmp; \
+  sha256sum -c terraform.sum; \
+  sha256sum -c provider.sum; \
   rm /tmp/terraform_SHA256SUMS /tmp/provider_SHA256SUMS /tmp/terraform.sum /tmp/provider.sum
 
 RUN unzip /tmp/terraform_${TERRAFORM_VERSION}_${TARGETOS}_${TARGETARCH}.zip -d /usr/local/bin \
