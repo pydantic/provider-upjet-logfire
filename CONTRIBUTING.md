@@ -41,7 +41,9 @@ the Makefile comment.
 
 ## Release
 
-Tag `main` with `vX.Y.Z`, push the tag, and watch `Publish Provider Package`.
+Move the `CHANGELOG.md` entry from `(unreleased)` to the release date and merge
+it. Then tag `main` with `vX.Y.Z`, push the tag, and watch
+`Publish Provider Package`.
 Verify the package and both Go toolchains:
 
 ```console
