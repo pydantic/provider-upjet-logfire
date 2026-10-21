@@ -35,7 +35,7 @@ spec:
     schema:
       openAPIV3Schema:
         description: Channel is the Schema for the Channels API. Manages a Logfire
-          alert channel.
+          alert channel. Import accepts the channel UUID or its name (label).
         properties:
           apiVersion:
             description: |-
@@ -83,15 +83,54 @@ spec:
                         - key
                         - name
                         type: object
+                      channelId:
+                        description: |-
+                          (String) Slack channel ID (for example C0123456789) the notifications are posted to. The Logfire Slack bot must already be a member of the channel.
+                          Slack channel ID (for example `C0123456789`) the notifications are posted to. The Logfire Slack bot must already be a member of the channel.
+                        type: string
                       format:
                         description: |-
                           (String) Webhook payload format.
                           Webhook payload format.
                         type: string
+                      includeAgentPrompt:
+                        description: |-
+                          enable the prompt.
+                          Whether Slack issue notifications include the "Ask your agent" MCP prompt line. Defaults to `true` for new Slack channels. Omitting it on an existing channel retains the current setting; set it to `true` explicitly to re-enable the prompt.
+                        type: boolean
+                      installId:
+                        description: |-
+                          > Connections). The installation must belong to the same organization, be active, and match the channel type.
+                          ID of the organization's Slack App or PagerDuty App installation, created by connecting the platform in the Logfire UI (Organization Settings -> Connections). The installation must belong to the same organization, be active, and match the channel type.
+                        type: string
+                      region:
+                        description: |-
+                          integration channel takes its region from the connected account.
+                          PagerDuty account region (`us` or `eu`). When omitted, Logfire uses the US Events API endpoint. Only for `pagerduty` channels; a `pagerduty-integration` channel takes its region from the connected account.
+                        type: string
+                      routingKeySecretRef:
+                        description: |-
+                          integration channels resolve the key from the installation instead.
+                          PagerDuty Events API v2 integration routing key. Only for `pagerduty` channels; `pagerduty-integration` channels resolve the key from the installation instead.
+                        properties:
+                          key:
+                            type: string
+                          name:
+                            description: Name of the secret.
+                            type: string
+                        required:
+                        - key
+                        - name
+                        type: object
+                      serviceId:
+                        description: |-
+                          integration channels.
+                          Logfire's ID (a UUID) for the PagerDuty service incidents are opened on, as approved for the installation when connecting PagerDuty. This is not PagerDuty's own service ID. Required for `pagerduty-integration` channels.
+                        type: string
                       type:
                         description: |-
-                          (String) Channel type (webhook or opsgenie).
-                          Channel type (`webhook` or `opsgenie`).
+                          integration, or slack-integration).
+                          Channel type (`webhook`, `opsgenie`, `pagerduty`, `pagerduty-integration`, or `slack-integration`).
                         type: string
                       url:
                         description: |-
@@ -142,15 +181,54 @@ spec:
                         - key
                         - name
                         type: object
+                      channelId:
+                        description: |-
+                          (String) Slack channel ID (for example C0123456789) the notifications are posted to. The Logfire Slack bot must already be a member of the channel.
+                          Slack channel ID (for example `C0123456789`) the notifications are posted to. The Logfire Slack bot must already be a member of the channel.
+                        type: string
                       format:
                         description: |-
                           (String) Webhook payload format.
                           Webhook payload format.
                         type: string
+                      includeAgentPrompt:
+                        description: |-
+                          enable the prompt.
+                          Whether Slack issue notifications include the "Ask your agent" MCP prompt line. Defaults to `true` for new Slack channels. Omitting it on an existing channel retains the current setting; set it to `true` explicitly to re-enable the prompt.
+                        type: boolean
+                      installId:
+                        description: |-
+                          > Connections). The installation must belong to the same organization, be active, and match the channel type.
+                          ID of the organization's Slack App or PagerDuty App installation, created by connecting the platform in the Logfire UI (Organization Settings -> Connections). The installation must belong to the same organization, be active, and match the channel type.
+                        type: string
+                      region:
+                        description: |-
+                          integration channel takes its region from the connected account.
+                          PagerDuty account region (`us` or `eu`). When omitted, Logfire uses the US Events API endpoint. Only for `pagerduty` channels; a `pagerduty-integration` channel takes its region from the connected account.
+                        type: string
+                      routingKeySecretRef:
+                        description: |-
+                          integration channels resolve the key from the installation instead.
+                          PagerDuty Events API v2 integration routing key. Only for `pagerduty` channels; `pagerduty-integration` channels resolve the key from the installation instead.
+                        properties:
+                          key:
+                            type: string
+                          name:
+                            description: Name of the secret.
+                            type: string
+                        required:
+                        - key
+                        - name
+                        type: object
+                      serviceId:
+                        description: |-
+                          integration channels.
+                          Logfire's ID (a UUID) for the PagerDuty service incidents are opened on, as approved for the installation when connecting PagerDuty. This is not PagerDuty's own service ID. Required for `pagerduty-integration` channels.
+                        type: string
                       type:
                         description: |-
-                          (String) Channel type (webhook or opsgenie).
-                          Channel type (`webhook` or `opsgenie`).
+                          integration, or slack-integration).
+                          Channel type (`webhook`, `opsgenie`, `pagerduty`, `pagerduty-integration`, or `slack-integration`).
                         type: string
                       url:
                         description: |-
@@ -246,15 +324,40 @@ spec:
                       (Block, Optional) Required channel configuration. (see below for nested schema)
                       Required channel configuration.
                     properties:
+                      channelId:
+                        description: |-
+                          (String) Slack channel ID (for example C0123456789) the notifications are posted to. The Logfire Slack bot must already be a member of the channel.
+                          Slack channel ID (for example `C0123456789`) the notifications are posted to. The Logfire Slack bot must already be a member of the channel.
+                        type: string
                       format:
                         description: |-
                           (String) Webhook payload format.
                           Webhook payload format.
                         type: string
+                      includeAgentPrompt:
+                        description: |-
+                          enable the prompt.
+                          Whether Slack issue notifications include the "Ask your agent" MCP prompt line. Defaults to `true` for new Slack channels. Omitting it on an existing channel retains the current setting; set it to `true` explicitly to re-enable the prompt.
+                        type: boolean
+                      installId:
+                        description: |-
+                          > Connections). The installation must belong to the same organization, be active, and match the channel type.
+                          ID of the organization's Slack App or PagerDuty App installation, created by connecting the platform in the Logfire UI (Organization Settings -> Connections). The installation must belong to the same organization, be active, and match the channel type.
+                        type: string
+                      region:
+                        description: |-
+                          integration channel takes its region from the connected account.
+                          PagerDuty account region (`us` or `eu`). When omitted, Logfire uses the US Events API endpoint. Only for `pagerduty` channels; a `pagerduty-integration` channel takes its region from the connected account.
+                        type: string
+                      serviceId:
+                        description: |-
+                          integration channels.
+                          Logfire's ID (a UUID) for the PagerDuty service incidents are opened on, as approved for the installation when connecting PagerDuty. This is not PagerDuty's own service ID. Required for `pagerduty-integration` channels.
+                        type: string
                       type:
                         description: |-
-                          (String) Channel type (webhook or opsgenie).
-                          Channel type (`webhook` or `opsgenie`).
+                          integration, or slack-integration).
+                          Channel type (`webhook`, `opsgenie`, `pagerduty`, `pagerduty-integration`, or `slack-integration`).
                         type: string
                       url:
                         description: |-

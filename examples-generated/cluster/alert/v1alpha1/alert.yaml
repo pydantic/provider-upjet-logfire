@@ -9,9 +9,16 @@ metadata:
 spec:
   forProvider:
     active: true
-    channelIdRefs:
-    - name: example
+    channelAssignments:
+    - channelIdSelector:
+        matchLabels:
+          testing.upbound.io/example-name: example
+    - channelIdSelector:
+        matchLabels:
+          testing.upbound.io/example-name: office
     description: Alert on exception spans
+    environments:
+    - production
     frequency: 15m
     name: error-alert
     notifyWhen: has_matches
@@ -45,6 +52,24 @@ spec:
       type: webhook
       url: https://example.com/logfire-webhook
     name: alerts-webhook
+
+---
+
+apiVersion: channel.logfire.pydantic.dev/v1alpha1
+kind: Channel
+metadata:
+  annotations:
+    meta.upbound.io/example-id: alert/v1alpha1/alert
+  labels:
+    testing.upbound.io/example-name: office
+  name: office
+spec:
+  forProvider:
+    config:
+      format: auto
+      type: webhook
+      url: https://example.com/logfire-office-webhook
+    name: office-hours-webhook
 
 ---
 

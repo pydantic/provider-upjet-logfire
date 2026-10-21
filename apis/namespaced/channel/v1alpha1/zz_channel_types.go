@@ -71,12 +71,36 @@ type ConfigInitParameters struct {
 	// Opsgenie API key.
 	AuthKeySecretRef *v1.LocalSecretKeySelector `json:"authKeySecretRef,omitempty" tf:"-"`
 
+	// (String) Slack channel ID (for example C0123456789) the notifications are posted to. The Logfire Slack bot must already be a member of the channel.
+	// Slack channel ID (for example `C0123456789`) the notifications are posted to. The Logfire Slack bot must already be a member of the channel.
+	ChannelID *string `json:"channelId,omitempty" tf:"channel_id,omitempty"`
+
 	// (String) Webhook payload format.
 	// Webhook payload format.
 	Format *string `json:"format,omitempty" tf:"format,omitempty"`
 
-	// (String) Channel type (webhook or opsgenie).
-	// Channel type (`webhook` or `opsgenie`).
+	// enable the prompt.
+	// Whether Slack issue notifications include the "Ask your agent" MCP prompt line. Defaults to `true` for new Slack channels. Omitting it on an existing channel retains the current setting; set it to `true` explicitly to re-enable the prompt.
+	IncludeAgentPrompt *bool `json:"includeAgentPrompt,omitempty" tf:"include_agent_prompt,omitempty"`
+
+	// > Connections). The installation must belong to the same organization, be active, and match the channel type.
+	// ID of the organization's Slack App or PagerDuty App installation, created by connecting the platform in the Logfire UI (Organization Settings -> Connections). The installation must belong to the same organization, be active, and match the channel type.
+	InstallID *string `json:"installId,omitempty" tf:"install_id,omitempty"`
+
+	// integration channel takes its region from the connected account.
+	// PagerDuty account region (`us` or `eu`). When omitted, Logfire uses the US Events API endpoint. Only for `pagerduty` channels; a `pagerduty-integration` channel takes its region from the connected account.
+	Region *string `json:"region,omitempty" tf:"region,omitempty"`
+
+	// integration channels resolve the key from the installation instead.
+	// PagerDuty Events API v2 integration routing key. Only for `pagerduty` channels; `pagerduty-integration` channels resolve the key from the installation instead.
+	RoutingKeySecretRef *v1.LocalSecretKeySelector `json:"routingKeySecretRef,omitempty" tf:"-"`
+
+	// integration channels.
+	// Logfire's ID (a UUID) for the PagerDuty service incidents are opened on, as approved for the installation when connecting PagerDuty. This is not PagerDuty's own service ID. Required for `pagerduty-integration` channels.
+	ServiceID *string `json:"serviceId,omitempty" tf:"service_id,omitempty"`
+
+	// integration, or slack-integration).
+	// Channel type (`webhook`, `opsgenie`, `pagerduty`, `pagerduty-integration`, or `slack-integration`).
 	Type *string `json:"type,omitempty" tf:"type,omitempty"`
 
 	// (String) Webhook URL endpoint.
@@ -86,12 +110,32 @@ type ConfigInitParameters struct {
 
 type ConfigObservation struct {
 
+	// (String) Slack channel ID (for example C0123456789) the notifications are posted to. The Logfire Slack bot must already be a member of the channel.
+	// Slack channel ID (for example `C0123456789`) the notifications are posted to. The Logfire Slack bot must already be a member of the channel.
+	ChannelID *string `json:"channelId,omitempty" tf:"channel_id,omitempty"`
+
 	// (String) Webhook payload format.
 	// Webhook payload format.
 	Format *string `json:"format,omitempty" tf:"format,omitempty"`
 
-	// (String) Channel type (webhook or opsgenie).
-	// Channel type (`webhook` or `opsgenie`).
+	// enable the prompt.
+	// Whether Slack issue notifications include the "Ask your agent" MCP prompt line. Defaults to `true` for new Slack channels. Omitting it on an existing channel retains the current setting; set it to `true` explicitly to re-enable the prompt.
+	IncludeAgentPrompt *bool `json:"includeAgentPrompt,omitempty" tf:"include_agent_prompt,omitempty"`
+
+	// > Connections). The installation must belong to the same organization, be active, and match the channel type.
+	// ID of the organization's Slack App or PagerDuty App installation, created by connecting the platform in the Logfire UI (Organization Settings -> Connections). The installation must belong to the same organization, be active, and match the channel type.
+	InstallID *string `json:"installId,omitempty" tf:"install_id,omitempty"`
+
+	// integration channel takes its region from the connected account.
+	// PagerDuty account region (`us` or `eu`). When omitted, Logfire uses the US Events API endpoint. Only for `pagerduty` channels; a `pagerduty-integration` channel takes its region from the connected account.
+	Region *string `json:"region,omitempty" tf:"region,omitempty"`
+
+	// integration channels.
+	// Logfire's ID (a UUID) for the PagerDuty service incidents are opened on, as approved for the installation when connecting PagerDuty. This is not PagerDuty's own service ID. Required for `pagerduty-integration` channels.
+	ServiceID *string `json:"serviceId,omitempty" tf:"service_id,omitempty"`
+
+	// integration, or slack-integration).
+	// Channel type (`webhook`, `opsgenie`, `pagerduty`, `pagerduty-integration`, or `slack-integration`).
 	Type *string `json:"type,omitempty" tf:"type,omitempty"`
 
 	// (String) Webhook URL endpoint.
@@ -106,13 +150,43 @@ type ConfigParameters struct {
 	// +kubebuilder:validation:Optional
 	AuthKeySecretRef *v1.LocalSecretKeySelector `json:"authKeySecretRef,omitempty" tf:"-"`
 
+	// (String) Slack channel ID (for example C0123456789) the notifications are posted to. The Logfire Slack bot must already be a member of the channel.
+	// Slack channel ID (for example `C0123456789`) the notifications are posted to. The Logfire Slack bot must already be a member of the channel.
+	// +kubebuilder:validation:Optional
+	ChannelID *string `json:"channelId,omitempty" tf:"channel_id,omitempty"`
+
 	// (String) Webhook payload format.
 	// Webhook payload format.
 	// +kubebuilder:validation:Optional
 	Format *string `json:"format,omitempty" tf:"format,omitempty"`
 
-	// (String) Channel type (webhook or opsgenie).
-	// Channel type (`webhook` or `opsgenie`).
+	// enable the prompt.
+	// Whether Slack issue notifications include the "Ask your agent" MCP prompt line. Defaults to `true` for new Slack channels. Omitting it on an existing channel retains the current setting; set it to `true` explicitly to re-enable the prompt.
+	// +kubebuilder:validation:Optional
+	IncludeAgentPrompt *bool `json:"includeAgentPrompt,omitempty" tf:"include_agent_prompt,omitempty"`
+
+	// > Connections). The installation must belong to the same organization, be active, and match the channel type.
+	// ID of the organization's Slack App or PagerDuty App installation, created by connecting the platform in the Logfire UI (Organization Settings -> Connections). The installation must belong to the same organization, be active, and match the channel type.
+	// +kubebuilder:validation:Optional
+	InstallID *string `json:"installId,omitempty" tf:"install_id,omitempty"`
+
+	// integration channel takes its region from the connected account.
+	// PagerDuty account region (`us` or `eu`). When omitted, Logfire uses the US Events API endpoint. Only for `pagerduty` channels; a `pagerduty-integration` channel takes its region from the connected account.
+	// +kubebuilder:validation:Optional
+	Region *string `json:"region,omitempty" tf:"region,omitempty"`
+
+	// integration channels resolve the key from the installation instead.
+	// PagerDuty Events API v2 integration routing key. Only for `pagerduty` channels; `pagerduty-integration` channels resolve the key from the installation instead.
+	// +kubebuilder:validation:Optional
+	RoutingKeySecretRef *v1.LocalSecretKeySelector `json:"routingKeySecretRef,omitempty" tf:"-"`
+
+	// integration channels.
+	// Logfire's ID (a UUID) for the PagerDuty service incidents are opened on, as approved for the installation when connecting PagerDuty. This is not PagerDuty's own service ID. Required for `pagerduty-integration` channels.
+	// +kubebuilder:validation:Optional
+	ServiceID *string `json:"serviceId,omitempty" tf:"service_id,omitempty"`
+
+	// integration, or slack-integration).
+	// Channel type (`webhook`, `opsgenie`, `pagerduty`, `pagerduty-integration`, or `slack-integration`).
 	// +kubebuilder:validation:Optional
 	Type *string `json:"type" tf:"type,omitempty"`
 
@@ -149,7 +223,7 @@ type ChannelStatus struct {
 // +kubebuilder:subresource:status
 // +kubebuilder:storageversion
 
-// Channel is the Schema for the Channels API. Manages a Logfire alert channel.
+// Channel is the Schema for the Channels API. Manages a Logfire alert channel. Import accepts the channel UUID or its name (label).
 // +kubebuilder:printcolumn:name="SYNCED",type="string",JSONPath=".status.conditions[?(@.type=='Synced')].status"
 // +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="EXTERNAL-NAME",type="string",JSONPath=".metadata.annotations.crossplane\\.io/external-name"

@@ -19,28 +19,20 @@ type AlertInitParameters struct {
 	// Whether the alert is active (defaults to true on creation).
 	Active *bool `json:"active,omitempty" tf:"active,omitempty"`
 
-	// References to Channel in channel to populate channelIds.
-	// +kubebuilder:validation:Optional
-	ChannelIDRefs []v1.Reference `json:"channelIdRefs,omitempty" tf:"-"`
-
-	// Selector for a list of Channel in channel to populate channelIds.
-	// +kubebuilder:validation:Optional
-	ChannelIDSelector *v1.Selector `json:"channelIdSelector,omitempty" tf:"-"`
-
-	// (Set of String) Set of channel IDs to notify.
-	// Set of channel IDs to notify.
-	// +crossplane:generate:reference:type=github.com/pydantic/provider-upjet-logfire/apis/cluster/channel/v1alpha1.Channel
-	// +crossplane:generate:reference:refFieldName=ChannelIDRefs
-	// +crossplane:generate:reference:selectorFieldName=ChannelIDSelector
-	// +listType=set
-	ChannelIds []*string `json:"channelIds,omitempty" tf:"channel_ids,omitempty"`
+	// (Attributes Set) Channels to notify, each with an optional delivery schedule. Set it to [] to notify no channel. This is the same type as alerts.<tier>.channel_assignments on logfire_slo, so one value (for example a locals entry) can configure both. (see below for nested schema)
+	ChannelAssignments []ChannelAssignmentsInitParameters `json:"channelAssignments,omitempty" tf:"channel_assignments,omitempty"`
 
 	// (String) Alert description.
 	// Alert description.
 	Description *string `json:"description,omitempty" tf:"description,omitempty"`
 
-	// (String) Evaluation frequency. Allowed values: 1m, 2m, 5m, 10m, 15m, 30m, 1h, 6h, 12h, 24h.
-	// Evaluation frequency. Allowed values: 1m, 2m, 5m, 10m, 15m, 30m, 1h, 6h, 12h, 24h.
+	// (Set of String) Deployment environments to scope the query to. Empty = all environments (no filter).
+	// Deployment environments to scope the query to. Empty = all environments (no filter).
+	// +listType=set
+	Environments []*string `json:"environments,omitempty" tf:"environments,omitempty"`
+
+	// (String) Evaluation frequency, as a duration from 1m to 24h (for example 5m, 20m, 1h). Equivalent spellings are accepted and kept as written.
+	// Evaluation frequency, as a duration from `1m` to `24h` (for example `5m`, `20m`, `1h`). Equivalent spellings are accepted and kept as written.
 	Frequency *string `json:"frequency,omitempty" tf:"frequency,omitempty"`
 
 	// (String) Alert name (unique per project).
@@ -68,8 +60,8 @@ type AlertInitParameters struct {
 	// SQL / query string used by the alert.
 	Query *string `json:"query,omitempty" tf:"query,omitempty"`
 
-	// (String) Lookback window. Allowed values: 1m, 2m, 5m, 10m, 15m, 30m, 1h, 6h, 12h, 24h, 7d, 30d.
-	// Lookback window. Allowed values: 1m, 2m, 5m, 10m, 15m, 30m, 1h, 6h, 12h, 24h, 7d, 30d.
+	// a longer window requires a less frequent evaluation - and reports that itself. Equivalent spellings are accepted and kept as written.
+	// Lookback window, as a duration from `1m` to `30d` (for example `20m`, `1h30m`, `7d`). The API caps this relative to `frequency` - a longer window requires a less frequent evaluation - and reports that itself. Equivalent spellings are accepted and kept as written.
 	TimeWindow *string `json:"timeWindow,omitempty" tf:"time_window,omitempty"`
 }
 
@@ -79,17 +71,20 @@ type AlertObservation struct {
 	// Whether the alert is active (defaults to true on creation).
 	Active *bool `json:"active,omitempty" tf:"active,omitempty"`
 
-	// (Set of String) Set of channel IDs to notify.
-	// Set of channel IDs to notify.
-	// +listType=set
-	ChannelIds []*string `json:"channelIds,omitempty" tf:"channel_ids,omitempty"`
+	// (Attributes Set) Channels to notify, each with an optional delivery schedule. Set it to [] to notify no channel. This is the same type as alerts.<tier>.channel_assignments on logfire_slo, so one value (for example a locals entry) can configure both. (see below for nested schema)
+	ChannelAssignments []ChannelAssignmentsObservation `json:"channelAssignments,omitempty" tf:"channel_assignments,omitempty"`
 
 	// (String) Alert description.
 	// Alert description.
 	Description *string `json:"description,omitempty" tf:"description,omitempty"`
 
-	// (String) Evaluation frequency. Allowed values: 1m, 2m, 5m, 10m, 15m, 30m, 1h, 6h, 12h, 24h.
-	// Evaluation frequency. Allowed values: 1m, 2m, 5m, 10m, 15m, 30m, 1h, 6h, 12h, 24h.
+	// (Set of String) Deployment environments to scope the query to. Empty = all environments (no filter).
+	// Deployment environments to scope the query to. Empty = all environments (no filter).
+	// +listType=set
+	Environments []*string `json:"environments,omitempty" tf:"environments,omitempty"`
+
+	// (String) Evaluation frequency, as a duration from 1m to 24h (for example 5m, 20m, 1h). Equivalent spellings are accepted and kept as written.
+	// Evaluation frequency, as a duration from `1m` to `24h` (for example `5m`, `20m`, `1h`). Equivalent spellings are accepted and kept as written.
 	Frequency *string `json:"frequency,omitempty" tf:"frequency,omitempty"`
 
 	// (String) Alert ID.
@@ -111,8 +106,8 @@ type AlertObservation struct {
 	// SQL / query string used by the alert.
 	Query *string `json:"query,omitempty" tf:"query,omitempty"`
 
-	// (String) Lookback window. Allowed values: 1m, 2m, 5m, 10m, 15m, 30m, 1h, 6h, 12h, 24h, 7d, 30d.
-	// Lookback window. Allowed values: 1m, 2m, 5m, 10m, 15m, 30m, 1h, 6h, 12h, 24h, 7d, 30d.
+	// a longer window requires a less frequent evaluation - and reports that itself. Equivalent spellings are accepted and kept as written.
+	// Lookback window, as a duration from `1m` to `30d` (for example `20m`, `1h30m`, `7d`). The API caps this relative to `frequency` - a longer window requires a less frequent evaluation - and reports that itself. Equivalent spellings are accepted and kept as written.
 	TimeWindow *string `json:"timeWindow,omitempty" tf:"time_window,omitempty"`
 
 	// managed watermark (lateness tolerance) sent to the API.
@@ -127,30 +122,23 @@ type AlertParameters struct {
 	// +kubebuilder:validation:Optional
 	Active *bool `json:"active,omitempty" tf:"active,omitempty"`
 
-	// References to Channel in channel to populate channelIds.
+	// (Attributes Set) Channels to notify, each with an optional delivery schedule. Set it to [] to notify no channel. This is the same type as alerts.<tier>.channel_assignments on logfire_slo, so one value (for example a locals entry) can configure both. (see below for nested schema)
 	// +kubebuilder:validation:Optional
-	ChannelIDRefs []v1.Reference `json:"channelIdRefs,omitempty" tf:"-"`
-
-	// Selector for a list of Channel in channel to populate channelIds.
-	// +kubebuilder:validation:Optional
-	ChannelIDSelector *v1.Selector `json:"channelIdSelector,omitempty" tf:"-"`
-
-	// (Set of String) Set of channel IDs to notify.
-	// Set of channel IDs to notify.
-	// +crossplane:generate:reference:type=github.com/pydantic/provider-upjet-logfire/apis/cluster/channel/v1alpha1.Channel
-	// +crossplane:generate:reference:refFieldName=ChannelIDRefs
-	// +crossplane:generate:reference:selectorFieldName=ChannelIDSelector
-	// +kubebuilder:validation:Optional
-	// +listType=set
-	ChannelIds []*string `json:"channelIds,omitempty" tf:"channel_ids,omitempty"`
+	ChannelAssignments []ChannelAssignmentsParameters `json:"channelAssignments,omitempty" tf:"channel_assignments,omitempty"`
 
 	// (String) Alert description.
 	// Alert description.
 	// +kubebuilder:validation:Optional
 	Description *string `json:"description,omitempty" tf:"description,omitempty"`
 
-	// (String) Evaluation frequency. Allowed values: 1m, 2m, 5m, 10m, 15m, 30m, 1h, 6h, 12h, 24h.
-	// Evaluation frequency. Allowed values: 1m, 2m, 5m, 10m, 15m, 30m, 1h, 6h, 12h, 24h.
+	// (Set of String) Deployment environments to scope the query to. Empty = all environments (no filter).
+	// Deployment environments to scope the query to. Empty = all environments (no filter).
+	// +kubebuilder:validation:Optional
+	// +listType=set
+	Environments []*string `json:"environments,omitempty" tf:"environments,omitempty"`
+
+	// (String) Evaluation frequency, as a duration from 1m to 24h (for example 5m, 20m, 1h). Equivalent spellings are accepted and kept as written.
+	// Evaluation frequency, as a duration from `1m` to `24h` (for example `5m`, `20m`, `1h`). Equivalent spellings are accepted and kept as written.
 	// +kubebuilder:validation:Optional
 	Frequency *string `json:"frequency,omitempty" tf:"frequency,omitempty"`
 
@@ -183,10 +171,63 @@ type AlertParameters struct {
 	// +kubebuilder:validation:Optional
 	Query *string `json:"query,omitempty" tf:"query,omitempty"`
 
-	// (String) Lookback window. Allowed values: 1m, 2m, 5m, 10m, 15m, 30m, 1h, 6h, 12h, 24h, 7d, 30d.
-	// Lookback window. Allowed values: 1m, 2m, 5m, 10m, 15m, 30m, 1h, 6h, 12h, 24h, 7d, 30d.
+	// a longer window requires a less frequent evaluation - and reports that itself. Equivalent spellings are accepted and kept as written.
+	// Lookback window, as a duration from `1m` to `30d` (for example `20m`, `1h30m`, `7d`). The API caps this relative to `frequency` - a longer window requires a less frequent evaluation - and reports that itself. Equivalent spellings are accepted and kept as written.
 	// +kubebuilder:validation:Optional
 	TimeWindow *string `json:"timeWindow,omitempty" tf:"time_window,omitempty"`
+}
+
+type ChannelAssignmentsInitParameters struct {
+
+	// (String) ID of the logfire_channel to notify.
+	// ID of the `logfire_channel` to notify.
+	// +crossplane:generate:reference:type=github.com/pydantic/provider-upjet-logfire/apis/cluster/channel/v1alpha1.Channel
+	ChannelID *string `json:"channelId,omitempty" tf:"channel_id,omitempty"`
+
+	// Reference to a Channel in channel to populate channelId.
+	// +kubebuilder:validation:Optional
+	ChannelIDRef *v1.Reference `json:"channelIdRef,omitempty" tf:"-"`
+
+	// Selector for a Channel in channel to populate channelId.
+	// +kubebuilder:validation:Optional
+	ChannelIDSelector *v1.Selector `json:"channelIdSelector,omitempty" tf:"-"`
+
+	// (String) ID of a logfire_schedule. The channel is notified only inside the schedule's windows. Omit it to notify the channel at all times.
+	// ID of a `logfire_schedule`. The channel is notified only inside the schedule's windows. Omit it to notify the channel at all times.
+	ScheduleID *string `json:"scheduleId,omitempty" tf:"schedule_id,omitempty"`
+}
+
+type ChannelAssignmentsObservation struct {
+
+	// (String) ID of the logfire_channel to notify.
+	// ID of the `logfire_channel` to notify.
+	ChannelID *string `json:"channelId,omitempty" tf:"channel_id,omitempty"`
+
+	// (String) ID of a logfire_schedule. The channel is notified only inside the schedule's windows. Omit it to notify the channel at all times.
+	// ID of a `logfire_schedule`. The channel is notified only inside the schedule's windows. Omit it to notify the channel at all times.
+	ScheduleID *string `json:"scheduleId,omitempty" tf:"schedule_id,omitempty"`
+}
+
+type ChannelAssignmentsParameters struct {
+
+	// (String) ID of the logfire_channel to notify.
+	// ID of the `logfire_channel` to notify.
+	// +crossplane:generate:reference:type=github.com/pydantic/provider-upjet-logfire/apis/cluster/channel/v1alpha1.Channel
+	// +kubebuilder:validation:Optional
+	ChannelID *string `json:"channelId,omitempty" tf:"channel_id,omitempty"`
+
+	// Reference to a Channel in channel to populate channelId.
+	// +kubebuilder:validation:Optional
+	ChannelIDRef *v1.Reference `json:"channelIdRef,omitempty" tf:"-"`
+
+	// Selector for a Channel in channel to populate channelId.
+	// +kubebuilder:validation:Optional
+	ChannelIDSelector *v1.Selector `json:"channelIdSelector,omitempty" tf:"-"`
+
+	// (String) ID of a logfire_schedule. The channel is notified only inside the schedule's windows. Omit it to notify the channel at all times.
+	// ID of a `logfire_schedule`. The channel is notified only inside the schedule's windows. Omit it to notify the channel at all times.
+	// +kubebuilder:validation:Optional
+	ScheduleID *string `json:"scheduleId,omitempty" tf:"schedule_id,omitempty"`
 }
 
 // AlertSpec defines the desired state of Alert
@@ -225,6 +266,7 @@ type AlertStatus struct {
 type Alert struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
+	// +kubebuilder:validation:XValidation:rule="!('*' in self.managementPolicies || 'Create' in self.managementPolicies || 'Update' in self.managementPolicies) || has(self.forProvider.channelAssignments) || (has(self.initProvider) && has(self.initProvider.channelAssignments))",message="spec.forProvider.channelAssignments is a required parameter"
 	// +kubebuilder:validation:XValidation:rule="!('*' in self.managementPolicies || 'Create' in self.managementPolicies || 'Update' in self.managementPolicies) || has(self.forProvider.frequency) || (has(self.initProvider) && has(self.initProvider.frequency))",message="spec.forProvider.frequency is a required parameter"
 	// +kubebuilder:validation:XValidation:rule="!('*' in self.managementPolicies || 'Create' in self.managementPolicies || 'Update' in self.managementPolicies) || has(self.forProvider.name) || (has(self.initProvider) && has(self.initProvider.name))",message="spec.forProvider.name is a required parameter"
 	// +kubebuilder:validation:XValidation:rule="!('*' in self.managementPolicies || 'Create' in self.managementPolicies || 'Update' in self.managementPolicies) || has(self.forProvider.notifyWhen) || (has(self.initProvider) && has(self.initProvider.notifyWhen))",message="spec.forProvider.notifyWhen is a required parameter"

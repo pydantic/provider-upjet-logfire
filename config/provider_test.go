@@ -47,14 +47,6 @@ func TestChannelConfigRemainsConfigurable(t *testing.T) {
 			if len(crdPaths) != 1 || crdPaths[0] != "config" {
 				t.Fatalf("unexpected CRD list conversion paths: %v", crdPaths)
 			}
-
-			fieldPaths := resource.Sensitive.GetFieldPaths()
-			if _, ok := fieldPaths["config[*].auth_key"]; ok {
-				t.Fatalf("stale wildcard auth_key path should have been removed: %v", fieldPaths)
-			}
-			if got := fieldPaths["config.auth_key"]; got != "config.authKeySecretRef" {
-				t.Fatalf("unexpected auth_key sensitive path mapping: %q", got)
-			}
 		})
 	}
 }

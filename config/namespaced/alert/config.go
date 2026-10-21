@@ -13,10 +13,8 @@ func Configure(p *config.Provider) {
 		r.References["project_id"] = config.Reference{
 			TerraformName: "logfire_project",
 		}
-		r.References["channel_ids"] = config.Reference{
-			TerraformName:     "logfire_channel",
-			RefFieldName:      "ChannelIDRefs",
-			SelectorFieldName: "ChannelIDSelector",
+		r.References["channel_assignments.channel_id"] = config.Reference{
+			TerraformName: "logfire_channel",
 		}
 	})
 }

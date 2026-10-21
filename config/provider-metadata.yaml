@@ -10,10 +10,19 @@ resources:
               manifest: |-
                 {
                   "active": true,
-                  "channel_ids": [
-                    "${logfire_channel.example.id}"
+                  "channel_assignments": [
+                    {
+                      "channel_id": "${logfire_channel.example.id}"
+                    },
+                    {
+                      "channel_id": "${logfire_channel.office.id}",
+                      "schedule_id": "${logfire_schedule.office_hours.id}"
+                    }
                   ],
                   "description": "Alert on exception spans",
+                  "environments": [
+                    "production"
+                  ],
                   "frequency": "15m",
                   "name": "error-alert",
                   "notify_when": "has_matches",
@@ -22,7 +31,6 @@ resources:
                   "time_window": "1h"
                 }
               references:
-                channel_ids: logfire_channel.example.id
                 project_id: logfire_project.example.id
               dependencies:
                 logfire_channel.example: |-
@@ -36,26 +44,94 @@ resources:
                       ],
                       "name": "alerts-webhook"
                     }
+                logfire_channel.office: |-
+                    {
+                      "config": [
+                        {
+                          "format": "auto",
+                          "type": "webhook",
+                          "url": "https://example.com/logfire-office-webhook"
+                        }
+                      ],
+                      "name": "office-hours-webhook"
+                    }
                 logfire_project.example: |-
                     {
                       "name": "example-project"
                     }
+                logfire_schedule.office_hours: |-
+                    {
+                      "label": "Office hours",
+                      "timezone": "Europe/London",
+                      "windows": [
+                        {
+                          "days": [
+                            1,
+                            2,
+                            3,
+                            4,
+                            5
+                          ],
+                          "end_time": "18:00",
+                          "start_time": "09:00"
+                        }
+                      ]
+                    }
         argumentDocs:
             active: (Boolean) Whether the alert is active (defaults to true on creation).
-            channel_ids: (Set of String) Set of channel IDs to notify.
+            channel_assignments: (Attributes Set) Channels to notify, each with an optional delivery schedule. Set it to [] to notify no channel. This is the same type as alerts.<tier>.channel_assignments on logfire_slo, so one value (for example a locals entry) can configure both. (see below for nested schema)
+            channel_id: (String) ID of the logfire_channel to notify.
             description: (String) Alert description.
-            frequency: '(String) Evaluation frequency. Allowed values: 1m, 2m, 5m, 10m, 15m, 30m, 1h, 6h, 12h, 24h.'
+            environments: (Set of String) Deployment environments to scope the query to. Empty = all environments (no filter).
+            frequency: (String) Evaluation frequency, as a duration from 1m to 24h (for example 5m, 20m, 1h). Equivalent spellings are accepted and kept as written.
             id: (String) Alert ID.
             name: (String) Alert name (unique per project).
             notify_when: (String) Notification rule. Must match API enum.
             project_id: (String) Project ID (UUID) used for alert API paths.
             query: (String) SQL / query string used by the alert.
-            time_window: '(String) Lookback window. Allowed values: 1m, 2m, 5m, 10m, 15m, 30m, 1h, 6h, 12h, 24h, 7d, 30d.'
+            schedule_id: (String) ID of a logfire_schedule. The channel is notified only inside the schedule's windows. Omit it to notify the channel at all times.
+            time_window: (String) Lookback window, as a duration from 1m to 30d (for example 20m, 1h30m, 7d). The API caps this relative to frequency - a longer window requires a less frequent evaluation - and reports that itself. Equivalent spellings are accepted and kept as written.
             watermark: (String) Provider-managed watermark (lateness tolerance) sent to the API.
-        importStatements: []
+        importStatements:
+            - |-
+              # Import by project name and alert name.
+              terraform import logfire_alert.example "example-project/error-alert"
+    logfire_api_key Resource - logfire:
+        subCategory: ""
+        description: 'Manages a Logfire API key. Write tokens (project:write_otlp), read tokens (project:read_otlp), gateway keys (project:gateway_proxy), and management keys are all API keys with different scopes. The new key can never exceed the provider credential''s own grant: its scopes must be a subset of the provider api_key scopes, so the provider key needs organization:create_api_key plus every scope it delegates.'
+        name: logfire_api_key Resource - logfire
+        title: logfire_api_key Resource - logfire
+        argumentDocs:
+            active: (Boolean) False once the key is disabled. Disable/enable is managed outside Terraform; deleting the resource revokes the key.
+            all_projects: (Boolean) True for org-wide keys with no project scope.
+            cache_enabled: (Boolean) Whether gateway responses are cached. Null inherits the project default.
+            created_at: (String) Timestamp when the key was created.
+            created_by_name: (String) Display name of the user that created the key, when known.
+            description: (String) Free-form description. Can be updated in place; setting it to null clears it.
+            expires_at: '(String) Optional RFC3339 expiration timestamp (for example 2026-12-31T23:59:59Z). If omitted, the key does not expire. Changing it replaces the key: expiry cannot be updated in place (an expired key cannot be re-enabled; create a new key instead).'
+            gateway: (Attributes) Gateway per-scope settings for keys with the project:gateway_proxy scope. Updatable in place. Removing the block clears every cap the key carries. (see below for nested schema)
+            id: (String) API key identifier. Use this identifier to import an existing key.
+            name: (String) Display name for the key. Can be updated in place.
+            project_id: (String) UUID of the project the key is scoped to. Omit for an org-wide key. Changing the project replaces the key. Scopes project:read_otlp, project:write_otlp, and project:gateway_proxy require a project.
+            project_name: (String) Name of the project the key is scoped to, if any.
+            scopes: '(Set of String) OAuth scopes granted to the key (for example project:write_otlp). Changing scopes replaces the key: scopes cannot be updated in place.'
+            spending_limit_daily: (Number) Maximum gateway spend in whole US dollars per day. Null means no limit.
+            spending_limit_monthly: (Number) Maximum gateway spend in whole US dollars per month. Null means no limit.
+            spending_limit_total: (Number) Maximum lifetime gateway spend in whole US dollars. Null means no limit.
+            spending_limit_weekly: (Number) Maximum gateway spend in whole US dollars per week. Null means no limit.
+            token: (String, Sensitive) The plaintext API key. Only returned on creation; never returned again by the API.
+        importStatements:
+            - |-
+              # Import an existing API key by its UUID. Key names are not unique across the
+              # organization, so the import is UUID-only. The UUID comes from the API key
+              # list endpoint (the API never returns the plaintext token again, so an import
+              # recovers the key without its token):
+              #   curl -s -H "Authorization: Bearer $LOGFIRE_API_KEY" \
+              #     "$LOGFIRE_BASE_URL/api/v1/api-keys/" | jq '.[] | {id, name}'
+              terraform import 'logfire_api_key.example' "9f9b2f9e-aaaa-bbbb-cccc-ddddeeeeffff"
     logfire_channel:
         subCategory: ""
-        description: Manages a Logfire alert channel.
+        description: Manages a Logfire alert channel. Import accepts the channel UUID or its name (label).
         name: logfire_channel
         title: logfire_channel Resource - logfire
         examples:
@@ -72,16 +148,78 @@ resources:
                   ],
                   "name": "alerts-webhook"
                 }
+            - name: pagerduty
+              manifest: |-
+                {
+                  "active": true,
+                  "config": [
+                    {
+                      "region": "us",
+                      "routing_key": "${var.pagerduty_routing_key}",
+                      "type": "pagerduty"
+                    }
+                  ],
+                  "name": "pagerduty-on-call"
+                }
+              references:
+                config.routing_key: var.pagerduty_routing_key
+            - name: slack_app
+              manifest: |-
+                {
+                  "active": true,
+                  "config": [
+                    {
+                      "channel_id": "C0123456789",
+                      "install_id": "018f9a6a-1234-7890-abcd-ef0123456789",
+                      "type": "slack-integration"
+                    }
+                  ],
+                  "name": "slack-app-alerts"
+                }
+            - name: pagerduty_app
+              manifest: |-
+                {
+                  "active": true,
+                  "config": [
+                    {
+                      "install_id": "${data.logfire_pagerduty_service.on_call.install_id}",
+                      "service_id": "${data.logfire_pagerduty_service.on_call.service_id}",
+                      "type": "pagerduty-integration"
+                    }
+                  ],
+                  "name": "pagerduty-app-on-call"
+                }
+              references:
+                config.install_id: data.logfire_pagerduty_service.on_call.install_id
+                config.service_id: data.logfire_pagerduty_service.on_call.service_id
         argumentDocs:
             active: (Boolean) Whether the channel is active.
             auth_key: (String, Sensitive) Opsgenie API key.
+            channel_id: (String) Slack channel ID (for example C0123456789) the notifications are posted to. The Logfire Slack bot must already be a member of the channel.
             config: (Block, Optional) Required channel configuration. (see below for nested schema)
             format: (String) Webhook payload format.
             id: (String) Channel ID.
+            include_agent_prompt: (Boolean) Whether Slack issue notifications include the "Ask your agent" MCP prompt line. Defaults to true for new Slack channels. Omitting it on an existing channel retains the current setting; set it to true explicitly to re-enable the prompt.
+            install_id: (String) ID of the organization's Slack App or PagerDuty App installation, created by connecting the platform in the Logfire UI (Organization Settings -> Connections). The installation must belong to the same organization, be active, and match the channel type.
             name: (String) Channel name.
-            type: (String) Channel type (webhook or opsgenie).
+            region: (String) PagerDuty account region (us or eu). When omitted, Logfire uses the US Events API endpoint. Only for pagerduty channels; a pagerduty-integration channel takes its region from the connected account.
+            routing_key: (String, Sensitive) PagerDuty Events API v2 integration routing key. Only for pagerduty channels; pagerduty-integration channels resolve the key from the installation instead.
+            service_id: (String) Logfire's ID (a UUID) for the PagerDuty service incidents are opened on, as approved for the installation when connecting PagerDuty. This is not PagerDuty's own service ID. Required for pagerduty-integration channels.
+            type: (String) Channel type (webhook, opsgenie, pagerduty, pagerduty-integration, or slack-integration).
             url: (String) Webhook URL endpoint.
-        importStatements: []
+        importStatements:
+            - |-
+              # Import an existing channel by its UUID, or by its name (label).
+              #
+              # The UUID comes from the channel list endpoint:
+              #   curl -s -H "Authorization: Bearer $LOGFIRE_API_KEY" \
+              #     "$LOGFIRE_BASE_URL/api/v1/channels/" | jq '.[] | {id, label}'
+              #
+              # By name:
+              terraform import 'logfire_channel.example' "alerts-webhook"
+
+              # By UUID:
+              terraform import 'logfire_channel.example' "9f9b2f9e-aaaa-bbbb-cccc-ddddeeeeffff"
     logfire_dashboard:
         subCategory: ""
         description: Manages a Logfire dashboard.
@@ -109,10 +247,163 @@ resources:
             name: (String) Dashboard display name.
             project_id: (String) Project UUID used for API paths.
             slug: (String) Dashboard slug used in URLs.
-        importStatements: []
+        importStatements:
+            - |-
+              terraform import logfire_dashboard.example "example-project/example-dashboard"
+              terraform plan -detailed-exitcode
+    logfire_frontend_application:
+        subCategory: ""
+        description: 'Experimental: the backing management API is currently enabled only in Logfire staging environments. Manages an immutable Logfire frontend application identity and exposes one active restricted browser token. Use logfire_frontend_application_token for two-phase rotation. Creation is not retried automatically because the operation is not idempotent; after an uncertain failure, list the applications and import the matching identity instead of applying again.'
+        name: logfire_frontend_application
+        title: logfire_frontend_application Resource - logfire
+        examples:
+            - name: browser
+              manifest: |-
+                {
+                  "environment": "production",
+                  "name": "browser",
+                  "project_id": "${logfire_project.example.id}",
+                  "service_namespace": "storefront"
+                }
+              references:
+                project_id: logfire_project.example.id
+              dependencies:
+                logfire_project.example: |-
+                    {
+                      "name": "example-project"
+                    }
+        argumentDocs:
+            adopt_existing_service_name: (Boolean) Allow creation when telemetry already reports under name. Set this before replacing service_namespace or environment without changing name.
+            created_at: (String) Timestamp when the application was created.
+            environment: (String) Immutable value used to overwrite deployment.environment.name when set.
+            id: (String) Frontend application identifier.
+            name: (String) Immutable application name. Logfire overwrites service.name with this value.
+            project_id: (String) UUID of the project that owns the application.
+            service_namespace: (String) Immutable value used to overwrite service.namespace when set.
+            token: (String, Sensitive) An active restricted browser token. The provider recovers this value on refresh and import.
+            token_id: (String) Identifier of an active restricted browser token.
+        importStatements:
+            - terraform import logfire_frontend_application.browser "project-id/application-id"
+    logfire_frontend_application_token:
+        subCategory: ""
+        description: 'Experimental: the backing management API is currently enabled only in Logfire staging environments. Manages one active token for a Logfire frontend application. Rotate in two applies with two resource blocks: add the replacement and deploy its token, then remove the old resource to revoke it. The provider never revokes an old token while creating a new one. Token issuance is not retried automatically because the operation is not idempotent; after an uncertain failure, list the application''s tokens and adopt the one unambiguous new active token. Before destroying the whole application tree, set the last token''s revoke_on_destroy to false in a separate apply; application deletion then revokes every attached token.'
+        name: logfire_frontend_application_token
+        title: logfire_frontend_application_token Resource - logfire
+        examples:
+            - name: current
+              manifest: |-
+                {
+                  "adopt_token_id": "${logfire_frontend_application.browser.token_id}",
+                  "application_id": "${logfire_frontend_application.browser.id}",
+                  "project_id": "${logfire_frontend_application.browser.project_id}"
+                }
+              references:
+                adopt_token_id: logfire_frontend_application.browser.token_id
+                application_id: logfire_frontend_application.browser.id
+                project_id: logfire_frontend_application.browser.project_id
+            - name: replacement
+              manifest: |-
+                {
+                  "application_id": "${logfire_frontend_application.browser.id}",
+                  "project_id": "${logfire_frontend_application.browser.project_id}",
+                  "revoke_on_destroy": true
+                }
+              references:
+                application_id: logfire_frontend_application.browser.id
+                project_id: logfire_frontend_application.browser.project_id
+        argumentDocs:
+            adopt_token_id: (String) Existing active token to adopt instead of issuing another. Use the application's token_id for the initial handoff, then remove this resource only after a separately managed replacement has been deployed.
+            application_id: (String) UUID of the frontend application.
+            created_at: (String) Timestamp when the token was created.
+            id: (String) Frontend application token identifier.
+            last_used_at: (String) Timestamp when the token was last used, when known.
+            project_id: (String) UUID of the project that owns the application.
+            revoke_on_destroy: (Boolean) Revoke this token when its resource is destroyed. Before destroying the entire application tree, set this to false in a separate apply for the last token so application deletion can revoke all attached tokens.
+            status: (String) Token status. A managed token remains in state only while active.
+            token: (String, Sensitive) Active restricted browser token. The provider recovers this value on refresh and import.
+        importStatements:
+            - terraform import logfire_frontend_application_token.current "project-id/application-id/token-id"
+    logfire_gateway_api_key Resource - logfire:
+        subCategory: ""
+        description: Manages a project-scoped AI Gateway API key (project:gateway_proxy scope). Do not confuse this with logfire_gateway_provider, which configures an upstream LLM provider credential. The provider credential needs organization:create_api_key plus project:gateway_proxy delegation; a project-scoped operator key for this is minted from the organization-level API keys page with the project selected.
+        name: logfire_gateway_api_key Resource - logfire
+        title: logfire_gateway_api_key Resource - logfire
+        argumentDocs:
+            active: (Boolean) False once the key is disabled. Disable/enable is managed outside Terraform; deleting the resource revokes the key.
+            cache_enabled: (Boolean) Whether gateway responses are cached. Null inherits the project default. Can be updated in place; setting it to null restores the default.
+            created_at: (String) Timestamp when the key was created.
+            description: (String) Free-form description. Can be updated in place; setting it to null clears it.
+            expires_at: (String) Optional RFC3339 expiration timestamp (for example 2026-12-31T23:59:59Z). If omitted, the key does not expire. Changing it replaces the key.
+            id: (String) Gateway API key identifier. Use this identifier to import an existing key.
+            name: (String) Display name for the key. Can be updated in place.
+            project_id: (String) UUID of the project the key proxies for. Gateway keys always require a project. Changing it replaces the key.
+            project_name: (String) Name of the project the key proxies for.
+            spending_limit_daily: (Number) Maximum gateway spend in whole US dollars per day. Null means no limit. Can be updated in place; setting it to null clears it.
+            spending_limit_monthly: (Number) Maximum gateway spend in whole US dollars per month. Null means no limit. Can be updated in place; setting it to null clears it.
+            spending_limit_total: (Number) Maximum gateway spend in whole US dollars per lifetime. Null means no limit. Can be updated in place; setting it to null clears it.
+            spending_limit_weekly: (Number) Maximum gateway spend in whole US dollars per week. Null means no limit. Can be updated in place; setting it to null clears it.
+            token: (String, Sensitive) The plaintext gateway API key. Only returned on creation; never returned again by the API.
+        importStatements:
+            - |-
+              # Import an existing gateway API key by its UUID. Key names are not unique
+              # across the organization, so the import is UUID-only. The UUID comes from the
+              # API key list endpoint (the API never returns the plaintext token again, so an
+              # import recovers the key without its token):
+              #   curl -s -H "Authorization: Bearer $LOGFIRE_API_KEY" \
+              #     "$LOGFIRE_BASE_URL/api/v1/api-keys/" | jq '.[] | {id, name}'
+              terraform import 'logfire_gateway_api_key.example' "9f9b2f9e-aaaa-bbbb-cccc-ddddeeeeffff"
+    logfire_gateway_provider:
+        subCategory: ""
+        description: Manages an organization-owned AI Gateway provider. Requires Growth, Enterprise Cloud, or self-hosted and a token with organization:read and organization:write scopes. Built-in providers and custom upstream URLs are not supported. Import accepts the provider UUID or its organization-unique slug.
+        name: logfire_gateway_provider
+        title: logfire_gateway_provider Resource - logfire
+        examples:
+            - name: openai
+              manifest: |-
+                {
+                  "api_key": "${var.openai_api_key}",
+                  "slug": "primary-openai",
+                  "vendor": "openai"
+                }
+              references:
+                api_key: var.openai_api_key
+            - name: bedrock
+              manifest: |-
+                {
+                  "api_key": "${var.bedrock_api_key}",
+                  "bedrock_api": "runtime",
+                  "bedrock_region": "us-east-1",
+                  "require_pricing": false,
+                  "slug": "primary-bedrock",
+                  "vendor": "bedrock"
+                }
+              references:
+                api_key: var.bedrock_api_key
+        argumentDocs:
+            api_key: (String, Sensitive) Upstream API key. Changing it rotates the credential in place. Logfire never returns this value; Terraform retains it in state. External credential changes cannot be detected. After import, the next apply sets the configured key.
+            bedrock_api: '(String) Bedrock API variant: runtime or mantle. Required only for bedrock; can be updated in place.'
+            bedrock_region: (String) AWS region used to derive the Bedrock endpoint, for example us-east-1. Required only for bedrock; can be updated in place.
+            created_at: (String) Timestamp when the provider was created.
+            id: (String) Provider UUID. Use this identifier to import an existing provider.
+            require_pricing: (Boolean) Require known model pricing before forwarding requests. Defaults to true.
+            slug: (String) Organization-unique provider slug. Changing it replaces the provider.
+            vendor: '(String) Upstream vendor: openai, anthropic, bedrock, doubleword, groq, huggingface, or mistral. Changing it replaces the provider.'
+        importStatements:
+            - |-
+              # Import an existing Gateway provider by its UUID, or by its organization-unique slug.
+              #
+              # The UUID comes from the provider list endpoint:
+              #   curl -s -H "Authorization: Bearer $LOGFIRE_API_KEY" \
+              #     "$LOGFIRE_BASE_URL/api/v1/gateway/providers/" | jq '.providers[] | {id, slug}'
+              #
+              # By slug:
+              terraform import 'logfire_gateway_provider.openai' "openai"
+
+              # By UUID:
+              terraform import 'logfire_gateway_provider.openai' "018f45c0-3cab-7b2f-a8f7-8a0b55a7ed11"
     logfire_organization:
         subCategory: ""
-        description: Manages a Logfire organization. This resource is only available for self-hosted deployments and requires an API key with a special organization scope.
+        description: Manages a Logfire organization. This resource is only available for self-hosted deployments and requires an API key created in the admin organization (the one with the admin panel) carrying the organization:admin scope. A key minted inside another organization cannot manage organizations regardless of its scopes. Reading, updating, and deleting an organization authenticates with a short-lived organization-scoped token exchanged from that key, and the same exchange backs setting billing_email at creation, so every operation beyond creating and listing requires a Logfire backend from 2026-06-25 (v2026-06-25.01) or newer; creating and listing organizations require 2026-06-03 (v2026-06-03.01) or newer.
         name: logfire_organization
         title: logfire_organization Resource - logfire
         examples:
@@ -138,10 +429,19 @@ resources:
             location: (String) Organization location.
             name: (String) Organization name/slug.
             updated_at: (String) Timestamp when the organization was last updated.
-        importStatements: []
+        importStatements:
+            - |-
+              # Import an existing organization by name or UUID. The provider credential must be
+              # an API key from the admin organization carrying the `organization:admin` scope.
+              #
+              # By name:
+              terraform import 'logfire_organization.example' "terraform-example-org"
+
+              # By UUID:
+              terraform import 'logfire_organization.example' "9f9b2f9e-aaaa-bbbb-cccc-ddddeeeeffff"
     logfire_project:
         subCategory: ""
-        description: Manages a Logfire project.
+        description: Manages a Logfire project. The credential creates the project in its own organization and must hold organization:create_project.
         name: logfire_project
         title: logfire_project Resource - logfire
         examples:
@@ -157,10 +457,13 @@ resources:
             name: (String) Project name/slug. Must be unique within the organization.
             organization: (String) Organization name. Computed from the API and cannot be set.
             visibility: (String) Project visibility (public or private).
-        importStatements: []
+        importStatements:
+            - |-
+              # Import by organization name and project name.
+              terraform import logfire_project.example "acme/example-project"
     logfire_read_token:
         subCategory: ""
-        description: Manages a Logfire read token.
+        description: 'Manages a Logfire read token. Equivalent to logfire_api_key with scopes ["project:read_otlp"]. Creating it requires the project:read_token scope on a credential that can reach the project. Import is not supported: the API returns the token value only at creation, so an imported token could never reproduce its secret in state. Recreate a token with Terraform to adopt it.'
         name: logfire_read_token
         title: logfire_read_token Resource - logfire
         examples:
@@ -188,9 +491,528 @@ resources:
             token: (String, Sensitive) The generated read token. Only returned on creation.
             token_prefix: (String) Prefix of the generated read token.
         importStatements: []
+    logfire_schedule:
+        subCategory: ""
+        description: Manages an organization-level Logfire delivery schedule. A channel assignment with a schedule_id notifies its channel only inside the schedule's windows. Use it in channel_assignments on logfire_alert and in alerts.
+        name: logfire_schedule
+        title: logfire_schedule Resource - logfire
+        examples:
+            - name: office_hours
+              manifest: |-
+                {
+                  "label": "Office hours",
+                  "timezone": "Europe/London",
+                  "windows": [
+                    {
+                      "days": [
+                        1,
+                        2,
+                        3,
+                        4,
+                        5
+                      ],
+                      "end_time": "18:00",
+                      "start_time": "09:00"
+                    }
+                  ]
+                }
+            - name: out_of_hours
+              manifest: |-
+                {
+                  "label": "Out of hours",
+                  "timezone": "America/New_York",
+                  "windows": [
+                    {
+                      "days": [
+                        1,
+                        2,
+                        3,
+                        4,
+                        5
+                      ],
+                      "end_time": "23:59",
+                      "start_time": "18:00"
+                    },
+                    {
+                      "days": [
+                        6,
+                        7
+                      ],
+                      "end_time": "23:59",
+                      "start_time": "00:00"
+                    }
+                  ]
+                }
+        argumentDocs:
+            days: '(List of Number) ISO weekday numbers: 1 is Monday and 7 is Sunday.'
+            end_time: (String) End of the window, as 24-hour HH:MM or HH:MM:SS in timezone. A read keeps your spelling when it denotes the same time, and shows seconds only when they are not zero.
+            id: (String) Schedule ID.
+            label: (String) Schedule name.
+            start_time: (String) Start of the window, as 24-hour HH:MM or HH:MM:SS in timezone. A read keeps your spelling when it denotes the same time, and shows seconds only when they are not zero.
+            timezone: (String) IANA time zone of the windows, for example Europe/London.
+            windows: (Attributes List) Time windows in which the schedule delivers. At least one. (see below for nested schema)
+        importStatements:
+            - |-
+              # Import an existing schedule by its UUID. The API has no schedule list and no
+              # lookup by label. The UUID is the `schedule_id` of any channel assignment that
+              # uses the schedule, for example in `logfire_slo.alerts` or in the alert
+              # API response.
+              terraform import 'logfire_schedule.office_hours' "9f9b2f9e-aaaa-bbbb-cccc-ddddeeeeffff"
+    logfire_slo:
+        subCategory: ""
+        description: 'Manages a Logfire SLO (Service Level Objective). ~> Experimental: this resource is backed by a Logfire API that is not yet stable. Its schema and behavior may change in backwards-incompatible ways in future releases. SLOs also require a Logfire plan that includes them.'
+        name: logfire_slo
+        title: logfire_slo Resource - logfire
+        examples:
+            - name: example
+              manifest: |-
+                {
+                  "alerts": {
+                    "fast": {
+                      "channel_assignments": "${local.everyone}"
+                    },
+                    "medium": {
+                      "channel_assignments": "${local.everyone}"
+                    },
+                    "slow": {
+                      "channel_assignments": "${local.everyone}"
+                    }
+                  },
+                  "bad_query": "otel_status_code = 'ERROR'",
+                  "description": "Successful request ratio for the payments API",
+                  "environments": [
+                    "prod"
+                  ],
+                  "name": "payments-availability",
+                  "project_id": "${logfire_project.example.id}",
+                  "rolling_window": "30d",
+                  "scope_value": "payments-api",
+                  "target_percent": "99.9",
+                  "total_query": "parent_span_id IS NULL"
+                }
+              references:
+                project_id: logfire_project.example.id
+              dependencies:
+                logfire_alert.payment_errors: |-
+                    {
+                      "channel_assignments": "${local.oncall}",
+                      "frequency": "1m",
+                      "name": "payment-errors",
+                      "notify_when": "has_matches",
+                      "project_id": "${logfire_project.example.id}",
+                      "query": "select trace_id from records where span_name = 'payment failed'",
+                      "time_window": "5m"
+                    }
+                logfire_channel.alerts: |-
+                    {
+                      "config": [
+                        {
+                          "format": "auto",
+                          "type": "webhook",
+                          "url": "https://hooks.example.com/alerts"
+                        }
+                      ],
+                      "name": "alerts-webhook"
+                    }
+                logfire_channel.incidents: |-
+                    {
+                      "config": [
+                        {
+                          "format": "auto",
+                          "type": "webhook",
+                          "url": "https://hooks.example.com/incidents"
+                        }
+                      ],
+                      "name": "incidents-webhook"
+                    }
+                logfire_channel.pagerduty: |-
+                    {
+                      "config": [
+                        {
+                          "routing_key": "${var.pagerduty_routing_key}",
+                          "type": "pagerduty"
+                        }
+                      ],
+                      "name": "pagerduty"
+                    }
+                logfire_channel.reliability: |-
+                    {
+                      "config": [
+                        {
+                          "format": "auto",
+                          "type": "webhook",
+                          "url": "https://hooks.example.com/reliability"
+                        }
+                      ],
+                      "name": "reliability-webhook"
+                    }
+                logfire_project.example: |-
+                    {
+                      "name": "example-project"
+                    }
+                logfire_schedule.office_hours: |-
+                    {
+                      "label": "Office hours",
+                      "timezone": "Europe/London",
+                      "windows": [
+                        {
+                          "days": [
+                            1,
+                            2,
+                            3,
+                            4,
+                            5
+                          ],
+                          "end_time": "18:00",
+                          "start_time": "09:00"
+                        }
+                      ]
+                    }
+            - name: checkout_errors
+              manifest: |-
+                {
+                  "alerts": {
+                    "fast": {
+                      "channel_assignments": [
+                        {
+                          "channel_id": "${logfire_channel.pagerduty.id}"
+                        },
+                        {
+                          "channel_id": "${logfire_channel.incidents.id}"
+                        }
+                      ]
+                    },
+                    "medium": {
+                      "channel_assignments": [
+                        {
+                          "channel_id": "${logfire_channel.incidents.id}"
+                        }
+                      ]
+                    },
+                    "slow": {
+                      "channel_assignments": [
+                        {
+                          "channel_id": "${logfire_channel.reliability.id}"
+                        }
+                      ]
+                    }
+                  },
+                  "bad_query": "otel_status_code = 'ERROR'",
+                  "name": "checkout-errors",
+                  "project_id": "${logfire_project.example.id}",
+                  "rolling_window": "30d",
+                  "scope_value": "checkout",
+                  "target_percent": "99.9",
+                  "total_query": "parent_span_id IS NULL"
+                }
+              references:
+                project_id: logfire_project.example.id
+              dependencies:
+                logfire_alert.payment_errors: |-
+                    {
+                      "channel_assignments": "${local.oncall}",
+                      "frequency": "1m",
+                      "name": "payment-errors",
+                      "notify_when": "has_matches",
+                      "project_id": "${logfire_project.example.id}",
+                      "query": "select trace_id from records where span_name = 'payment failed'",
+                      "time_window": "5m"
+                    }
+                logfire_channel.alerts: |-
+                    {
+                      "config": [
+                        {
+                          "format": "auto",
+                          "type": "webhook",
+                          "url": "https://hooks.example.com/alerts"
+                        }
+                      ],
+                      "name": "alerts-webhook"
+                    }
+                logfire_channel.incidents: |-
+                    {
+                      "config": [
+                        {
+                          "format": "auto",
+                          "type": "webhook",
+                          "url": "https://hooks.example.com/incidents"
+                        }
+                      ],
+                      "name": "incidents-webhook"
+                    }
+                logfire_channel.pagerduty: |-
+                    {
+                      "config": [
+                        {
+                          "routing_key": "${var.pagerduty_routing_key}",
+                          "type": "pagerduty"
+                        }
+                      ],
+                      "name": "pagerduty"
+                    }
+                logfire_channel.reliability: |-
+                    {
+                      "config": [
+                        {
+                          "format": "auto",
+                          "type": "webhook",
+                          "url": "https://hooks.example.com/reliability"
+                        }
+                      ],
+                      "name": "reliability-webhook"
+                    }
+                logfire_project.example: |-
+                    {
+                      "name": "example-project"
+                    }
+                logfire_schedule.office_hours: |-
+                    {
+                      "label": "Office hours",
+                      "timezone": "Europe/London",
+                      "windows": [
+                        {
+                          "days": [
+                            1,
+                            2,
+                            3,
+                            4,
+                            5
+                          ],
+                          "end_time": "18:00",
+                          "start_time": "09:00"
+                        }
+                      ]
+                    }
+            - name: checkout
+              manifest: |-
+                {
+                  "alerts": {
+                    "fast": {
+                      "channel_assignments": "${local.oncall}"
+                    },
+                    "medium": {
+                      "channel_assignments": "${local.oncall}"
+                    },
+                    "slow": {
+                      "channel_assignments": [
+                        {
+                          "channel_id": "${logfire_channel.reliability.id}",
+                          "schedule_id": "${logfire_schedule.office_hours.id}"
+                        }
+                      ]
+                    }
+                  },
+                  "bad_query": "otel_status_code = 'ERROR'",
+                  "name": "checkout-availability",
+                  "project_id": "${logfire_project.example.id}",
+                  "rolling_window": "30d",
+                  "scope_value": "checkout",
+                  "target_percent": "99.9",
+                  "total_query": "parent_span_id IS NULL"
+                }
+              references:
+                project_id: logfire_project.example.id
+              dependencies:
+                logfire_alert.payment_errors: |-
+                    {
+                      "channel_assignments": "${local.oncall}",
+                      "frequency": "1m",
+                      "name": "payment-errors",
+                      "notify_when": "has_matches",
+                      "project_id": "${logfire_project.example.id}",
+                      "query": "select trace_id from records where span_name = 'payment failed'",
+                      "time_window": "5m"
+                    }
+                logfire_channel.alerts: |-
+                    {
+                      "config": [
+                        {
+                          "format": "auto",
+                          "type": "webhook",
+                          "url": "https://hooks.example.com/alerts"
+                        }
+                      ],
+                      "name": "alerts-webhook"
+                    }
+                logfire_channel.incidents: |-
+                    {
+                      "config": [
+                        {
+                          "format": "auto",
+                          "type": "webhook",
+                          "url": "https://hooks.example.com/incidents"
+                        }
+                      ],
+                      "name": "incidents-webhook"
+                    }
+                logfire_channel.pagerduty: |-
+                    {
+                      "config": [
+                        {
+                          "routing_key": "${var.pagerduty_routing_key}",
+                          "type": "pagerduty"
+                        }
+                      ],
+                      "name": "pagerduty"
+                    }
+                logfire_channel.reliability: |-
+                    {
+                      "config": [
+                        {
+                          "format": "auto",
+                          "type": "webhook",
+                          "url": "https://hooks.example.com/reliability"
+                        }
+                      ],
+                      "name": "reliability-webhook"
+                    }
+                logfire_project.example: |-
+                    {
+                      "name": "example-project"
+                    }
+                logfire_schedule.office_hours: |-
+                    {
+                      "label": "Office hours",
+                      "timezone": "Europe/London",
+                      "windows": [
+                        {
+                          "days": [
+                            1,
+                            2,
+                            3,
+                            4,
+                            5
+                          ],
+                          "end_time": "18:00",
+                          "start_time": "09:00"
+                        }
+                      ]
+                    }
+            - name: queue_latency
+              manifest: |-
+                {
+                  "comparison": "less_than",
+                  "metric_aggregation": "histogram_threshold",
+                  "name": "queue-latency-under-60s",
+                  "project_id": "${logfire_project.example.id}",
+                  "rolling_window": "30d",
+                  "scope_value": "ingest",
+                  "source": "metrics",
+                  "target_percent": "95",
+                  "threshold": "60000",
+                  "total_query": "metric_name = 'queue.latency'"
+                }
+              references:
+                project_id: logfire_project.example.id
+              dependencies:
+                logfire_alert.payment_errors: |-
+                    {
+                      "channel_assignments": "${local.oncall}",
+                      "frequency": "1m",
+                      "name": "payment-errors",
+                      "notify_when": "has_matches",
+                      "project_id": "${logfire_project.example.id}",
+                      "query": "select trace_id from records where span_name = 'payment failed'",
+                      "time_window": "5m"
+                    }
+                logfire_channel.alerts: |-
+                    {
+                      "config": [
+                        {
+                          "format": "auto",
+                          "type": "webhook",
+                          "url": "https://hooks.example.com/alerts"
+                        }
+                      ],
+                      "name": "alerts-webhook"
+                    }
+                logfire_channel.incidents: |-
+                    {
+                      "config": [
+                        {
+                          "format": "auto",
+                          "type": "webhook",
+                          "url": "https://hooks.example.com/incidents"
+                        }
+                      ],
+                      "name": "incidents-webhook"
+                    }
+                logfire_channel.pagerduty: |-
+                    {
+                      "config": [
+                        {
+                          "routing_key": "${var.pagerduty_routing_key}",
+                          "type": "pagerduty"
+                        }
+                      ],
+                      "name": "pagerduty"
+                    }
+                logfire_channel.reliability: |-
+                    {
+                      "config": [
+                        {
+                          "format": "auto",
+                          "type": "webhook",
+                          "url": "https://hooks.example.com/reliability"
+                        }
+                      ],
+                      "name": "reliability-webhook"
+                    }
+                logfire_project.example: |-
+                    {
+                      "name": "example-project"
+                    }
+                logfire_schedule.office_hours: |-
+                    {
+                      "label": "Office hours",
+                      "timezone": "Europe/London",
+                      "windows": [
+                        {
+                          "days": [
+                            1,
+                            2,
+                            3,
+                            4,
+                            5
+                          ],
+                          "end_time": "18:00",
+                          "start_time": "09:00"
+                        }
+                      ]
+                    }
+        argumentDocs:
+            alert_id: (String) ID of the tier's alert. Null only for an SLO created before Logfire kept all three tier alerts, when the tier could not fire at the SLO's target. The provider then plans an update of the SLO, even when no attribute changed, and that update creates the missing alert.
+            alerts: '(Attributes) The SLO''s burn-rate alerts, one per tier: fast and medium (severity page) and slow (severity ticket). Each alert exists as long as the SLO does. Configure channel_assignments on the tiers whose delivery Terraform should manage. A tier that is not configured is not sent and not managed: the provider reports its current channels and never changes them. Setting channel_assignments needs Logfire v2026-09-23.01 or newer. An older release does not apply them, so the provider fails the apply with an error. alerts is null when the Logfire release does not return the SLO''s alerts. (see below for nested schema)'
+            bad_query: (String) SQL boolean expression selecting the bad events counted by the SLO. Required for every mode except metric_aggregation = "histogram_threshold", which uses threshold and comparison instead.
+            channel_assignments: (Attributes Set) Channels of this tier's alert, each with an optional delivery schedule. The provider writes the value to the alert on create, and on update when it differs from what the alert has. It is read back from the alert, so a change made on the Logfire alerts page shows as drift. Set it to [] to remove every channel. It is the same type as logfire_alert.channel_assignments. (see below for nested schema)
+            channel_id: (String) ID of the logfire_channel to notify.
+            comparison: '(String) For metric_aggregation = "histogram_threshold": the good side of the threshold. less_than (good is below the threshold, the latency case) or greater_than. Required for that mode, and must be omitted otherwise.'
+            description: (String) SLO description.
+            environments: (Set of String) Deployment environments the SLO is scoped to. Omit to cover all environments.
+            fast: (Attributes) The fast burn-rate tier's alert (severity page). Omit it to leave that alert's channels as they are. (see below for nested schema)
+            id: (String) SLO ID.
+            medium: (Attributes) The medium burn-rate tier's alert (severity page). Omit it to leave that alert's channels as they are. (see below for nested schema)
+            metric_aggregation: '(String) How a metrics SLO aggregates its SLI: additive (sum of scalar values, for delta-count metrics), gauge_fraction (fraction of samples meeting the condition, for gauges), counter_rate (sum of per-series increases, for cumulative counters), or histogram_threshold (fraction of histogram observations past a threshold; uses threshold and comparison instead of bad_query, and requires source = "metrics"). Ignored when source = "records". Defaults to additive.'
+            name: (String) SLO name (unique per project).
+            project_id: (String) Project ID (UUID) used for SLO API paths.
+            rolling_window: '(String) Rolling evaluation window as a duration string (e.g. "24h", "30d"). Must be between 1h and 90d. The API enforces a lower effective cap: the window cannot exceed your subscription plan''s maximum SLO window, nor the project''s data retention for the SLO source (records or metrics) — a longer window would compute against missing data. Requests over either cap are rejected with a validation error.'
+            schedule_id: (String) ID of a logfire_schedule. The channel is notified only inside the schedule's windows. Omit it to notify the channel at all times.
+            scope_kind: '(String) What the SLO is anchored to: a service (service) or an LLM provider (provider). Defaults to service. Changing it forces a new SLO.'
+            scope_value: (String) The service name (scope_kind = "service") or provider slug like openai (scope_kind = "provider"). Changing it forces a new SLO.
+            severity: (String) page for the fast and medium tiers, ticket for the slow tier.
+            slow: (Attributes) The slow burn-rate tier's alert (severity ticket). Omit it to leave that alert's channels as they are. (see below for nested schema)
+            source: (String) Whether the SLO ratio is computed over span events (records) or metric values (metrics). Defaults to records.
+            target_percent: (String) Target percentage as a decimal string, exclusively between 0 and 100 (e.g. "99.9").
+            threshold: '(String) For metric_aggregation = "histogram_threshold": the cutoff in the metric''s native unit, as a decimal string (e.g. "60000" on a _ms latency metric). Required for that mode, and must be omitted otherwise.'
+            total_query: (String) SQL boolean expression selecting all events counted by the SLO.
+            viable: (Boolean) False when the tier cannot fire at the SLO's target_percent. The alert keeps its channels but is not evaluated until a target change makes the tier viable.
+        importStatements:
+            - |-
+              # Import by project name and SLO name.
+              terraform import logfire_slo.example "example-project/payments-availability"
     logfire_write_token:
         subCategory: ""
-        description: Manages a Logfire write token.
+        description: 'Manages a Logfire write token. Equivalent to logfire_api_key with scopes ["project:write_otlp"]. Creating it requires the project:write_token scope on a credential that can reach the project. Import is not supported: the API returns the token value only at creation, so an imported token could never reproduce its secret in state. Recreate a token with Terraform to adopt it.'
         name: logfire_write_token
         title: logfire_write_token Resource - logfire
         examples:

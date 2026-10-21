@@ -7,6 +7,9 @@ metadata:
     testing.upbound.io/example-name: example
   name: example
 spec:
+  writeConnectionSecretToRef:
+    name: example-read-token
+    namespace: crossplane-system
   forProvider:
     expiresAt: "2099-12-31T23:59:59Z"
     projectIdSelector:

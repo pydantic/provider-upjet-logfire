@@ -20,26 +20,27 @@ func (mg *Alert) ResolveReferences(ctx context.Context, c client.Reader) error {
 	r := reference.NewAPIResolver(c, mg)
 
 	var rsp reference.ResolutionResponse
-	var mrsp reference.MultiResolutionResponse
 	var err error
 
-	mrsp, err = r.ResolveMultiple(ctx, reference.MultiResolutionRequest{
-		CurrentValues: reference.FromPtrValues(mg.Spec.ForProvider.ChannelIds),
-		Extract:       reference.ExternalName(),
-		Namespace:     mg.GetNamespace(),
-		References:    mg.Spec.ForProvider.ChannelIDRefs,
-		Selector:      mg.Spec.ForProvider.ChannelIDSelector,
-		To: reference.To{
-			List:    &v1alpha1.ChannelList{},
-			Managed: &v1alpha1.Channel{},
-		},
-	})
-	if err != nil {
-		return errors.Wrap(err, "mg.Spec.ForProvider.ChannelIds")
-	}
-	mg.Spec.ForProvider.ChannelIds = reference.ToPtrValues(mrsp.ResolvedValues)
-	mg.Spec.ForProvider.ChannelIDRefs = mrsp.ResolvedReferences
+	for i3 := 0; i3 < len(mg.Spec.ForProvider.ChannelAssignments); i3++ {
+		rsp, err = r.Resolve(ctx, reference.ResolutionRequest{
+			CurrentValue: reference.FromPtrValue(mg.Spec.ForProvider.ChannelAssignments[i3].ChannelID),
+			Extract:      reference.ExternalName(),
+			Namespace:    mg.GetNamespace(),
+			Reference:    mg.Spec.ForProvider.ChannelAssignments[i3].ChannelIDRef,
+			Selector:     mg.Spec.ForProvider.ChannelAssignments[i3].ChannelIDSelector,
+			To: reference.To{
+				List:    &v1alpha1.ChannelList{},
+				Managed: &v1alpha1.Channel{},
+			},
+		})
+		if err != nil {
+			return errors.Wrap(err, "mg.Spec.ForProvider.ChannelAssignments[i3].ChannelID")
+		}
+		mg.Spec.ForProvider.ChannelAssignments[i3].ChannelID = reference.ToPtrValue(rsp.ResolvedValue)
+		mg.Spec.ForProvider.ChannelAssignments[i3].ChannelIDRef = rsp.ResolvedReference
 
+	}
 	rsp, err = r.Resolve(ctx, reference.ResolutionRequest{
 		CurrentValue: reference.FromPtrValue(mg.Spec.ForProvider.ProjectID),
 		Extract:      reference.ExternalName(),
@@ -57,23 +58,25 @@ func (mg *Alert) ResolveReferences(ctx context.Context, c client.Reader) error {
 	mg.Spec.ForProvider.ProjectID = reference.ToPtrValue(rsp.ResolvedValue)
 	mg.Spec.ForProvider.ProjectIDRef = rsp.ResolvedReference
 
-	mrsp, err = r.ResolveMultiple(ctx, reference.MultiResolutionRequest{
-		CurrentValues: reference.FromPtrValues(mg.Spec.InitProvider.ChannelIds),
-		Extract:       reference.ExternalName(),
-		Namespace:     mg.GetNamespace(),
-		References:    mg.Spec.InitProvider.ChannelIDRefs,
-		Selector:      mg.Spec.InitProvider.ChannelIDSelector,
-		To: reference.To{
-			List:    &v1alpha1.ChannelList{},
-			Managed: &v1alpha1.Channel{},
-		},
-	})
-	if err != nil {
-		return errors.Wrap(err, "mg.Spec.InitProvider.ChannelIds")
-	}
-	mg.Spec.InitProvider.ChannelIds = reference.ToPtrValues(mrsp.ResolvedValues)
-	mg.Spec.InitProvider.ChannelIDRefs = mrsp.ResolvedReferences
+	for i3 := 0; i3 < len(mg.Spec.InitProvider.ChannelAssignments); i3++ {
+		rsp, err = r.Resolve(ctx, reference.ResolutionRequest{
+			CurrentValue: reference.FromPtrValue(mg.Spec.InitProvider.ChannelAssignments[i3].ChannelID),
+			Extract:      reference.ExternalName(),
+			Namespace:    mg.GetNamespace(),
+			Reference:    mg.Spec.InitProvider.ChannelAssignments[i3].ChannelIDRef,
+			Selector:     mg.Spec.InitProvider.ChannelAssignments[i3].ChannelIDSelector,
+			To: reference.To{
+				List:    &v1alpha1.ChannelList{},
+				Managed: &v1alpha1.Channel{},
+			},
+		})
+		if err != nil {
+			return errors.Wrap(err, "mg.Spec.InitProvider.ChannelAssignments[i3].ChannelID")
+		}
+		mg.Spec.InitProvider.ChannelAssignments[i3].ChannelID = reference.ToPtrValue(rsp.ResolvedValue)
+		mg.Spec.InitProvider.ChannelAssignments[i3].ChannelIDRef = rsp.ResolvedReference
 
+	}
 	rsp, err = r.Resolve(ctx, reference.ResolutionRequest{
 		CurrentValue: reference.FromPtrValue(mg.Spec.InitProvider.ProjectID),
 		Extract:      reference.ExternalName(),

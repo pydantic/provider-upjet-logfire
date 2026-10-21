@@ -101,6 +101,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Check Uptest Credentials
+        env:
+          UPTEST_CLOUD_CREDENTIALS: ${{ secrets.UPTEST_CLOUD_CREDENTIALS }}
+        run: |
+          if [ -z "$UPTEST_CLOUD_CREDENTIALS" ]; then
+            echo "::error::UPTEST_CLOUD_CREDENTIALS repository secret is not set"
+            exit 1
+          fi
+
       - name: Cleanup Disk
         uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # v1.3.1
         with:
