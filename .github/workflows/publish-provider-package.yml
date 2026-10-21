@@ -21,7 +21,8 @@ permissions:
 
 jobs:
   publish-provider-package:
-    uses: crossplane-contrib/provider-workflows/.github/workflows/publish-provider-non-family.yml@main
+    # Pin the reusable workflow. It runs with packages: write.
+    uses: crossplane-contrib/provider-workflows/.github/workflows/publish-provider-non-family.yml@451c4dc6ad3691b0a702a997a0ac24e8bbc8bbaa # main, 2026-02-25
     with:
       repository: provider-upjet-logfire
       registry_org: pydantic
