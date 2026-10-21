@@ -41,7 +41,7 @@ PLATFORMS ?= linux_amd64 linux_arm64
 # not detect a host CPU count.
 GO_TEST_PARALLEL := $(shell n="$(if $(strip $(NPROCS)),$(strip $(NPROCS)),1)"; p=$$(( n / 2 )); if [ $$p -lt 1 ]; then p=1; fi; echo $$p)
 
-GO_REQUIRED_VERSION ?= 1.24
+GO_REQUIRED_VERSION ?= 1.27.3
 GOLANGCILINT_VERSION ?= 2.7.2
 GO_STATIC_PACKAGES = $(GO_PROJECT)/cmd/provider $(GO_PROJECT)/cmd/generator
 GO_LDFLAGS += -X $(GO_PROJECT)/internal/version.Version=$(VERSION)

@@ -2,6 +2,8 @@ module github.com/pydantic/provider-upjet-logfire
 
 go 1.24.11
 
+toolchain go1.27.3
+
 tool golang.org/x/tools/cmd/goimports
 
 require (

@@ -10,8 +10,8 @@ on:
 
 env:
   # Common versions
-  GO_VERSION: '1.24'
-  GOLANGCI_VERSION: 'v2.7.2'
+  GO_VERSION: '1.27.3'
+  GOLANGCI_VERSION: 'v2.15.0'
   DOCKER_BUILDX_VERSION: 'v0.30.1'
 
 jobs:
@@ -37,6 +37,9 @@ jobs:
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           submodules: true
+      - name: Fetch base branch
+        if: github.event_name == 'pull_request'
+        run: git fetch origin "${{ github.base_ref }}:refs/heads/${{ github.base_ref }}"
 
       - name: Get modified CRDs
         id: modified-crds
