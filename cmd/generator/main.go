@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	ujconfig "github.com/crossplane/upjet/v2/pkg/config"
@@ -43,6 +44,9 @@ func run(rootDir string) error {
 		return err
 	}
 	if err := fixGeneratedDashboardExamples(absRootDir); err != nil {
+		return err
+	}
+	if err := fixGeneratedGatewayExamples(absRootDir); err != nil {
 		return err
 	}
 	return normalizeGeneratedExamples(absRootDir)
@@ -196,6 +200,33 @@ func fixGeneratedDashboardExamples(rootDir string) error {
 		}
 		if err := os.WriteFile(path, []byte(updated), 0o600); err != nil {
 			return fmt.Errorf("cannot rewrite generated dashboard example %s: %w", path, err)
+		}
+	}
+	return nil
+}
+
+var gatewayProviderReference = regexp.MustCompile(`\$\{logfire_gateway_provider\.([a-z0-9_]+)\.id\}`)
+
+// fixGeneratedGatewayExamples replaces Terraform interpolation that names
+// logfire_gateway_provider, which this provider does not generate, with a
+// placeholder that cannot be mistaken for a resolved UUID.
+func fixGeneratedGatewayExamples(rootDir string) error {
+	for _, rel := range []string{
+		filepath.Join("examples-generated", "cluster", "gateway", "v1alpha1", "endpoint.yaml"),
+		filepath.Join("examples-generated", "namespaced", "gateway", "v1alpha1", "endpoint.yaml"),
+	} {
+		path := filepath.Join(rootDir, rel)
+		// #nosec G304 -- path is built from known generated file locations inside the repo root.
+		content, err := os.ReadFile(path)
+		if err != nil {
+			return fmt.Errorf("cannot read generated gateway example %s: %w", path, err)
+		}
+		updated := gatewayProviderReference.ReplaceAllString(string(content), "REPLACE-WITH-$1-PROVIDER-UUID")
+		if updated == string(content) {
+			continue
+		}
+		if err := os.WriteFile(path, []byte(updated), 0o600); err != nil {
+			return fmt.Errorf("cannot rewrite generated gateway example %s: %w", path, err)
 		}
 	}
 	return nil

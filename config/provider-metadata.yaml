@@ -352,9 +352,74 @@ resources:
               #   curl -s -H "Authorization: Bearer $LOGFIRE_API_KEY" \
               #     "$LOGFIRE_BASE_URL/api/v1/api-keys/" | jq '.[] | {id, name}'
               terraform import 'logfire_gateway_api_key.example' "9f9b2f9e-aaaa-bbbb-cccc-ddddeeeeffff"
+    logfire_gateway_endpoint:
+        subCategory: ""
+        description: Manages an organization-owned AI Gateway endpoint and the providers it routes to. Requires Growth, Enterprise Cloud, or self-hosted and a token with organization:read_gateway and organization:write_gateway scopes (organization:read and organization:write are also accepted). Endpoints that use built-in providers or more than 100 providers are not supported. Import accepts the endpoint UUID or its organization-unique slug.
+        name: logfire_gateway_endpoint
+        title: logfire_gateway_endpoint Resource - logfire
+        examples:
+            - name: default
+              manifest: |-
+                {
+                  "description": "Prefer OpenAI and fall back to Anthropic.",
+                  "providers": [
+                    {
+                      "priority": 10,
+                      "provider_id": "${logfire_gateway_provider.openai.id}"
+                    },
+                    {
+                      "provider_id": "${logfire_gateway_provider.anthropic.id}"
+                    }
+                  ],
+                  "slug": "default"
+                }
+        argumentDocs:
+            active: (Boolean) Whether the Gateway routes to this provider. Defaults to true.
+            created_at: (String) Timestamp when the endpoint was created.
+            description: (String) Endpoint description.
+            id: (String) Endpoint UUID.
+            priority: (Number) The Gateway tries providers with a higher priority first. Providers with the same priority are tried in a random order that follows their weights. Defaults to 0.
+            provider_id: (String) UUID of a logfire_gateway_provider in the same organization.
+            providers: (Attributes Set) Complete set of providers the endpoint routes to. A change replaces the whole set in one request. At least one provider must be active. (see below for nested schema)
+            slug: (String) Organization-unique endpoint slug. Changing it replaces the endpoint.
+            weight: (Number) Positive relative weight among providers with the same priority. Defaults to 1.
+        importStatements:
+            - |-
+              # Import an existing Gateway endpoint by its organization-unique slug, or by its UUID.
+              #
+              # By slug:
+              terraform import 'logfire_gateway_endpoint.default' "default"
+
+              # By UUID:
+              terraform import 'logfire_gateway_endpoint.default' "018f45c0-3cab-7b2f-a8f7-8a0b55a7ed00"
+    logfire_gateway_project_spending_limits:
+        subCategory: ""
+        description: Manages the AI Gateway spending limits of one project. When the project goes over a limit, the Gateway blocks every credential in the project until the window resets. Requires a plan that includes the AI Gateway and a token with organization:read_gateway and organization:write_gateway scopes (organization:read and organization:write are also accepted).
+        name: logfire_gateway_project_spending_limits
+        title: logfire_gateway_project_spending_limits Resource - logfire
+        examples:
+            - name: example
+              manifest: |-
+                {
+                  "monthly_usd": 1000,
+                  "project_id": "${logfire_project.example.id}",
+                  "weekly_usd": 200
+                }
+              references:
+                project_id: logfire_project.example.id
+        argumentDocs:
+            daily_usd: (Number) The daily limit in whole US dollars. A day starts at 00:00 UTC. Omit it to have no daily limit.
+            id: (String) The project UUID.
+            monthly_usd: (Number) The monthly limit in whole US dollars. A month starts on the 1st at 00:00 UTC. Omit it to have no monthly limit.
+            project_id: (String) The UUID of the project that the limits apply to. Changing it replaces the resource.
+            weekly_usd: (Number) The weekly limit in whole US dollars. A week starts on Monday at 00:00 UTC. Omit it to have no weekly limit.
+        importStatements:
+            - |-
+              # Import the spending limits of a project by the project UUID.
+              terraform import 'logfire_gateway_project_spending_limits.example' "018f45c0-3cab-7b2f-a8f7-8a0b55a7ed00"
     logfire_gateway_provider:
         subCategory: ""
-        description: Manages an organization-owned AI Gateway provider. Requires Growth, Enterprise Cloud, or self-hosted and a token with organization:read and organization:write scopes. Built-in providers and custom upstream URLs are not supported. Import accepts the provider UUID or its organization-unique slug.
+        description: Manages an organization-owned AI Gateway provider. Requires Growth, Enterprise Cloud, or self-hosted and a token with organization:read and organization:write scopes. Built-in providers and arbitrary upstream URLs are not supported. Import accepts the provider UUID or its organization-unique slug.
         name: logfire_gateway_provider
         title: logfire_gateway_provider Resource - logfire
         examples:
@@ -379,15 +444,34 @@ resources:
                 }
               references:
                 api_key: var.bedrock_api_key
+            - name: azure
+              manifest: |-
+                {
+                  "api_key": "${var.azure_api_key}",
+                  "endpoint": "https://my-resource.openai.azure.com",
+                  "slug": "primary-azure",
+                  "vendor": "azure"
+                }
+              references:
+                api_key: var.azure_api_key
+            - name: vertex
+              manifest: |-
+                {
+                  "api_key": "${file(\"vertex-service-account.json\")}",
+                  "endpoint": "https://us-central1-aiplatform.googleapis.com",
+                  "slug": "primary-vertex",
+                  "vendor": "google-vertex"
+                }
         argumentDocs:
-            api_key: (String, Sensitive) Upstream API key. Changing it rotates the credential in place. Logfire never returns this value; Terraform retains it in state. External credential changes cannot be detected. After import, the next apply sets the configured key.
+            api_key: (String, Sensitive) Upstream API key. For google-vertex, the service account key JSON. Changing it rotates the credential in place. Logfire never returns this value; Terraform retains it in state. External credential changes cannot be detected. After import, the next apply sets the configured key.
             bedrock_api: '(String) Bedrock API variant: runtime or mantle. Required only for bedrock; can be updated in place.'
             bedrock_region: (String) AWS region used to derive the Bedrock endpoint, for example us-east-1. Required only for bedrock; can be updated in place.
             created_at: (String) Timestamp when the provider was created.
+            endpoint: (String) Upstream endpoint URL, for example https://my-resource.openai.azure.com or https://us-central1-aiplatform.googleapis.com. Required only for azure and google-vertex; can be updated in place.
             id: (String) Provider UUID. Use this identifier to import an existing provider.
             require_pricing: (Boolean) Require known model pricing before forwarding requests. Defaults to true.
             slug: (String) Organization-unique provider slug. Changing it replaces the provider.
-            vendor: '(String) Upstream vendor: openai, anthropic, bedrock, doubleword, groq, huggingface, or mistral. Changing it replaces the provider.'
+            vendor: '(String) Upstream vendor: openai, anthropic, azure, bedrock, doubleword, google-vertex, groq, huggingface, or mistral. Changing it replaces the provider.'
         importStatements:
             - |-
               # Import an existing Gateway provider by its UUID, or by its organization-unique slug.
@@ -401,6 +485,27 @@ resources:
 
               # By UUID:
               terraform import 'logfire_gateway_provider.openai' "018f45c0-3cab-7b2f-a8f7-8a0b55a7ed11"
+    logfire_gateway_spending_limits:
+        subCategory: ""
+        description: Manages the AI Gateway spending limits of the organization. An organization limit caps the Gateway spend of every project and credential in the organization. Requires a plan that includes the AI Gateway and a token with organization:read_gateway and organization:write_gateway scopes (organization:read and organization:write are also accepted).
+        name: logfire_gateway_spending_limits
+        title: logfire_gateway_spending_limits Resource - logfire
+        examples:
+            - name: this
+              manifest: |-
+                {
+                  "daily_usd": 500,
+                  "monthly_usd": 10000
+                }
+        argumentDocs:
+            daily_usd: (Number) The daily limit in whole US dollars. A day starts at 00:00 UTC. Omit it to have no daily limit.
+            id: (String) Always organization.
+            monthly_usd: (Number) The monthly limit in whole US dollars. A month starts on the 1st at 00:00 UTC. Omit it to have no monthly limit.
+            weekly_usd: (Number) The weekly limit in whole US dollars. A week starts on Monday at 00:00 UTC. Omit it to have no weekly limit.
+        importStatements:
+            - |-
+              # The organization has one set of spending limits, so the import ID is always "organization".
+              terraform import 'logfire_gateway_spending_limits.this' "organization"
     logfire_organization:
         subCategory: ""
         description: Manages a Logfire organization. This resource is only available for self-hosted deployments and requires an API key created in the admin organization (the one with the admin panel) carrying the organization:admin scope. A key minted inside another organization cannot manage organizations regardless of its scopes. Reading, updating, and deleting an organization authenticates with a short-lived organization-scoped token exchanged from that key, and the same exchange backs setting billing_email at creation, so every operation beyond creating and listing requires a Logfire backend from 2026-06-25 (v2026-06-25.01) or newer; creating and listing organizations require 2026-06-03 (v2026-06-03.01) or newer.
