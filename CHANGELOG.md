@@ -38,9 +38,9 @@ BUG FIXES:
   `channelAssignments`. The `Alert` then failed validation on every reconcile and
   could not be deleted. The provider now resolves references itself and saves
   them with a merge patch that leaves other fields alone. An `Alert` already in
-  that state recovers on its next reconcile,
-  unless its deletion was requested before the upgrade. In that case, set
-  `spec.forProvider.projectId` to the project's ID so the deletion can finish.
+  that state recovers on its next reconcile, unless its deletion was requested
+  before that. In that case, set `spec.forProvider.projectId` to the project's
+  ID so the deletion can finish.
 
 ## v0.3.0 (2026-10-21)
 

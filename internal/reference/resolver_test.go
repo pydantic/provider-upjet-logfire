@@ -7,6 +7,8 @@ import (
 
 	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
+	"github.com/pkg/errors"
+	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/ptr"
@@ -133,5 +135,38 @@ func TestResolverSavesNothingWhenAReferenceFails(t *testing.T) {
 	}
 	if len(rec.patches) != 0 || load(t, store).Spec.ForProvider.ProjectID != nil {
 		t.Errorf("patches = %v, want nothing saved", rec.patches)
+	}
+}
+
+// A resolver working from a stale copy must not overwrite a newer edit. The
+// conflict fails this reconcile, and the next one starts from the new object.
+func TestResolverDoesNotOverwriteNewerEdits(t *testing.T) {
+	alert := &alertv1alpha1.Alert{}
+	alert.Spec.ForProvider.ProjectIDRef = &xpv1.Reference{Name: "proj"}
+	alert.Spec.ForProvider.ChannelAssignments = []alertv1alpha1.ChannelAssignmentsParameters{{ChannelIDRef: &xpv1.Reference{Name: "hook"}}}
+	store, c, _ := setup(t, alert)
+	stale := load(t, store)
+	newer := load(t, store)
+	newer.Spec.ForProvider.ChannelAssignments[0].ScheduleID = ptr.To("schedule")
+	if err := store.Update(context.Background(), newer); err != nil {
+		t.Fatal(err)
+	}
+
+	resolve := NewResolver(c)
+	err := resolve.ResolveReferences(context.Background(), stale)
+	if !kerrors.IsConflict(errors.Cause(err)) {
+		t.Fatalf("err = %v, want a conflict", err)
+	}
+	if got := load(t, store).Spec.ForProvider; got.ProjectID != nil || ptr.Deref(got.ChannelAssignments[0].ScheduleID, "") != "schedule" {
+		t.Fatalf("stored spec = %+v, want the newer edit untouched", got)
+	}
+
+	if err := resolve.ResolveReferences(context.Background(), load(t, store)); err != nil {
+		t.Fatal(err)
+	}
+	got := load(t, store).Spec.ForProvider
+	if ptr.Deref(got.ProjectID, "") != "project-uuid" || ptr.Deref(got.ChannelAssignments[0].ChannelID, "") != "channel-uuid" ||
+		ptr.Deref(got.ChannelAssignments[0].ScheduleID, "") != "schedule" {
+		t.Errorf("stored spec = %+v, want references resolved and the schedule kept", got)
 	}
 }

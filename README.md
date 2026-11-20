@@ -94,7 +94,8 @@ token.
 
 Resources follow Terraform's semantics, with these points to know:
 
-- Removing an optional field from the spec clears it in Logfire. A token's
+- Removing an optional field from the spec clears it in Logfire, or fails if the
+  object needs it, such as a webhook channel's `url`. A token's
   `expiresAt` keeps its current value instead. A field with a Logfire default,
   such as `active` or `visibility`, keeps a non-default value but returns to the
   default from `false`, so set such a field rather than removing it.
@@ -106,9 +107,9 @@ Resources follow Terraform's semantics, with these points to know:
   `terraform-provider-logfire` documentation lists the import ID of each
   resource. Once the resource is ready, the annotation holds the object's ID.
   Copy the values from `status.atProvider` into `spec.forProvider`, then remove
-  `managementPolicies`. Status leaves out channel credentials, so add the
-  `authKeySecretRef` or `routingKeySecretRef` a channel needs. Read and write
-  tokens cannot be imported.
+  `managementPolicies`. Status leaves out channel credentials and masks a
+  webhook URL, so add the channel's real `url` and its `authKeySecretRef` or
+  `routingKeySecretRef`. Read and write tokens cannot be imported.
 - A `SpendingLimits` or `ProjectSpendingLimits` resource owns all three windows.
   A window it leaves out has no limit, and deleting the resource removes every
   limit.
