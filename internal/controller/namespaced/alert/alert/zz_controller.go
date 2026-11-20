@@ -23,6 +23,7 @@ import (
 
 	v1alpha1 "github.com/pydantic/provider-upjet-logfire/apis/namespaced/alert/v1alpha1"
 	features "github.com/pydantic/provider-upjet-logfire/internal/features"
+	reference "github.com/pydantic/provider-upjet-logfire/internal/reference"
 )
 
 // SetupGated adds a controller that reconciles Alert managed resources.
@@ -50,6 +51,7 @@ func Setup(mgr ctrl.Manager, o tjcontroller.Options) error {
 		managed.WithFinalizer(terraform.NewWorkspaceFinalizer(o.WorkspaceStore, xpresource.NewAPIFinalizer(mgr.GetClient(), managed.FinalizerName))),
 		managed.WithTimeout(3 * time.Minute),
 		managed.WithInitializers(initializers),
+		managed.WithReferenceResolver(reference.NewResolver(mgr.GetClient())),
 		managed.WithPollInterval(o.PollInterval),
 	}
 	if o.PollJitter != 0 {

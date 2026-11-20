@@ -2,6 +2,9 @@
   "logfire_alert",
   "logfire_channel",
   "logfire_dashboard",
+  "logfire_gateway_endpoint",
+  "logfire_gateway_project_spending_limits",
+  "logfire_gateway_spending_limits",
   "logfire_project",
   "logfire_read_token",
   "logfire_write_token"

@@ -34,6 +34,9 @@ func run(rootDir string) error {
 	if err := applyExampleConversions(absRootDir, pc, pns); err != nil {
 		return err
 	}
+	if err := fixGeneratedReferenceResolvers(absRootDir); err != nil {
+		return err
+	}
 	if err := fixGeneratedChannelConnectionDetails(absRootDir); err != nil {
 		return err
 	}
@@ -68,6 +71,42 @@ func applyExampleConversions(rootDir string, pc, pns *ujconfig.Provider) error {
 		return fmt.Errorf("cannot convert singleton lists in namespaced examples: %w", err)
 	}
 	return nil
+}
+
+// fixGeneratedReferenceResolvers makes every controller resolve references
+// with internal/reference. The upjet controller template has no option for
+// this, and the crossplane-runtime default resolver can drop spec fields; see
+// reference.NewResolver.
+func fixGeneratedReferenceResolvers(rootDir string) error {
+	const (
+		optionAnchor = "\t\tmanaged.WithInitializers(initializers),\n"
+		option       = "\t\tmanaged.WithReferenceResolver(reference.NewResolver(mgr.GetClient())),\n"
+		importAnchor = "\tfeatures \"github.com/pydantic/provider-upjet-logfire/internal/features\"\n"
+		importLine   = "\treference \"github.com/pydantic/provider-upjet-logfire/internal/reference\"\n"
+	)
+	return filepath.WalkDir(filepath.Join(rootDir, "internal", "controller"), func(path string, d os.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() || d.Name() != "zz_controller.go" {
+			return nil
+		}
+		// #nosec G304 -- path is returned by walking the repo's internal/controller tree.
+		content, err := os.ReadFile(path)
+		if err != nil {
+			return fmt.Errorf("cannot read generated controller %s: %w", path, err)
+		}
+		src := string(content)
+		if strings.Count(src, optionAnchor) != 1 || strings.Count(src, importAnchor) != 1 {
+			return fmt.Errorf("cannot find where to add the reference resolver in %s", path)
+		}
+		src = strings.Replace(src, optionAnchor, optionAnchor+option, 1)
+		src = strings.Replace(src, importAnchor, importAnchor+importLine, 1)
+		if err := os.WriteFile(path, []byte(src), 0o600); err != nil {
+			return fmt.Errorf("cannot rewrite generated controller %s: %w", path, err)
+		}
+		return nil
+	})
 }
 
 func fixGeneratedChannelConnectionDetails(rootDir string) error {
