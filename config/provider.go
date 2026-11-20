@@ -58,7 +58,6 @@ func GetProvider() *ujconfig.Provider {
 	}
 
 	pc.ConfigureResources()
-	ResolveReferencesWithUpdate(pc)
 	return pc
 }
 
@@ -90,6 +89,5 @@ func GetProviderNamespaced() *ujconfig.Provider {
 	}
 
 	pc.ConfigureResources()
-	ResolveReferencesWithUpdate(pc)
 	return pc
 }

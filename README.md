@@ -106,7 +106,9 @@ Resources follow Terraform's semantics, with these points to know:
   `terraform-provider-logfire` documentation lists the import ID of each
   resource. Once the resource is ready, the annotation holds the object's ID.
   Copy the values from `status.atProvider` into `spec.forProvider`, then remove
-  `managementPolicies`. Read and write tokens cannot be imported.
+  `managementPolicies`. Status leaves out channel credentials, so add the
+  `authKeySecretRef` or `routingKeySecretRef` a channel needs. Read and write
+  tokens cannot be imported.
 - A `SpendingLimits` or `ProjectSpendingLimits` resource owns all three windows.
   A window it leaves out has no limit, and deleting the resource removes every
   limit.

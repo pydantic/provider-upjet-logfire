@@ -36,8 +36,9 @@ BUG FIXES:
   keeps reconciling after later edits. Crossplane's reference resolver saved only
   the fields it changed with a server-side apply, which dropped `projectId` or
   `channelAssignments`. The `Alert` then failed validation on every reconcile and
-  could not be deleted. Kinds with references now resolve them first and save the
-  whole object. An `Alert` already in that state recovers on its next reconcile,
+  could not be deleted. The provider now resolves references itself and saves
+  them with a merge patch that leaves other fields alone. An `Alert` already in
+  that state recovers on its next reconcile,
   unless its deletion was requested before the upgrade. In that case, set
   `spec.forProvider.projectId` to the project's ID so the deletion can finish.
 

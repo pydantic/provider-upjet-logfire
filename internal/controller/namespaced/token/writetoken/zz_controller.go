@@ -23,6 +23,7 @@ import (
 
 	v1alpha1 "github.com/pydantic/provider-upjet-logfire/apis/namespaced/token/v1alpha1"
 	features "github.com/pydantic/provider-upjet-logfire/internal/features"
+	reference "github.com/pydantic/provider-upjet-logfire/internal/reference"
 )
 
 // SetupGated adds a controller that reconciles WriteToken managed resources.
@@ -39,9 +40,6 @@ func SetupGated(mgr ctrl.Manager, o tjcontroller.Options) error {
 func Setup(mgr ctrl.Manager, o tjcontroller.Options) error {
 	name := managed.ControllerName(v1alpha1.WriteToken_GroupVersionKind.String())
 	var initializers managed.InitializerChain
-	for _, i := range o.Provider.Resources["logfire_write_token"].InitializerFns {
-		initializers = append(initializers, i(mgr.GetClient()))
-	}
 	eventHandler := handler.NewEventHandler(handler.WithLogger(o.Logger.WithValues("gvk", v1alpha1.WriteToken_GroupVersionKind)))
 	ac := tjcontroller.NewAPICallbacks(mgr, xpresource.ManagedKind(v1alpha1.WriteToken_GroupVersionKind), tjcontroller.WithEventHandler(eventHandler))
 	opts := []managed.ReconcilerOption{
@@ -53,6 +51,7 @@ func Setup(mgr ctrl.Manager, o tjcontroller.Options) error {
 		managed.WithFinalizer(terraform.NewWorkspaceFinalizer(o.WorkspaceStore, xpresource.NewAPIFinalizer(mgr.GetClient(), managed.FinalizerName))),
 		managed.WithTimeout(3 * time.Minute),
 		managed.WithInitializers(initializers),
+		managed.WithReferenceResolver(reference.NewResolver(mgr.GetClient())),
 		managed.WithPollInterval(o.PollInterval),
 	}
 	if o.PollJitter != 0 {
