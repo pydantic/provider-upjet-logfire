@@ -77,6 +77,76 @@ resources:
                         }
                       ]
                     }
+            - name: per_service
+              manifest: |-
+                {
+                  "channel_assignments": [
+                    {
+                      "channel_id": "${logfire_channel.example.id}"
+                    }
+                  ],
+                  "frequency": "15m",
+                  "instance_policy": {
+                    "identity_columns": [
+                      "service_name"
+                    ],
+                    "missing_behavior": "no_longer_matching",
+                    "missing_runs": 3,
+                    "pending_runs": 2
+                  },
+                  "name": "error-alert-per-service",
+                  "notify_when": "instances_changed",
+                  "project_id": "${logfire_project.example.id}",
+                  "query": "select service_name from records where level = 'error' group by service_name",
+                  "time_window": "1h"
+                }
+              references:
+                project_id: logfire_project.example.id
+              dependencies:
+                logfire_channel.example: |-
+                    {
+                      "config": [
+                        {
+                          "format": "auto",
+                          "type": "webhook",
+                          "url": "https://example.com/logfire-webhook"
+                        }
+                      ],
+                      "name": "alerts-webhook"
+                    }
+                logfire_channel.office: |-
+                    {
+                      "config": [
+                        {
+                          "format": "auto",
+                          "type": "webhook",
+                          "url": "https://example.com/logfire-office-webhook"
+                        }
+                      ],
+                      "name": "office-hours-webhook"
+                    }
+                logfire_project.example: |-
+                    {
+                      "name": "example-project"
+                    }
+                logfire_schedule.office_hours: |-
+                    {
+                      "label": "Office hours",
+                      "timezone": "Europe/London",
+                      "windows": [
+                        {
+                          "days": [
+                            1,
+                            2,
+                            3,
+                            4,
+                            5
+                          ],
+                          "end_time": "18:00",
+                          "start_time": "09:00"
+                        }
+                      ]
+                    }
         argumentDocs:
             active: (Boolean) Whether the alert is active (defaults to true on creation).
             channel_assignments: (Attributes Set) Channels to notify, each with an optional delivery schedule. Set it to [] to notify no channel. This is the same type as alerts.<tier>.channel_assignments on logfire_slo, so one value (for example a locals entry) can configure both. (see below for nested schema)
@@ -85,8 +155,13 @@ resources:
             environments: (Set of String) Deployment environments to scope the query to. Empty = all environments (no filter).
             frequency: (String) Evaluation frequency, as a duration from 1m to 24h (for example 5m, 20m, 1h). Equivalent spellings are accepted and kept as written.
             id: (String) Alert ID.
+            identity_columns: (List of String) Result columns whose values identify an occurrence. One to 8 unique names of 1 to 128 characters.
+            instance_policy: (Attributes) Track each result row as its own occurrence, keyed by the identity columns, instead of evaluating the whole result as one. Needs an organization with alert instance policies enabled, otherwise the API answers 403 alert_instances_not_enabled. Remove the attribute to evaluate the whole result as one again. The API's deprecated continuity_runs is not exposed. A new policy gets the value of missing_runs, and a change keeps the stored value unless it is lower than missing_runs. (see below for nested schema)
+            missing_behavior: (String) The close reason of an occurrence that is missing for missing_runs runs. One of no_longer_matching or expire.
+            missing_runs: (Number) Consecutive runs without the occurrence, 1 to 100, before it closes.
             name: (String) Alert name (unique per project).
-            notify_when: (String) Notification rule. Must match API enum.
+            notify_when: (String) Notification rule. Must match API enum. instances_changed needs instance_policy. It sends one notification for each run that opens or closes occurrences, listing them, from Logfire v2026-11-13.01.
+            pending_runs: (Number) Consecutive matching runs, 1 to 100, before a new occurrence fires.
             project_id: (String) Project ID (UUID) used for alert API paths.
             query: (String) SQL / query string used by the alert.
             schedule_id: (String) ID of a logfire_schedule. The channel is notified only inside the schedule's windows. Omit it to notify the channel at all times.
@@ -148,6 +223,36 @@ resources:
                   ],
                   "name": "alerts-webhook"
                 }
+            - name: opsgenie_eu
+              manifest: |-
+                {
+                  "active": true,
+                  "config": [
+                    {
+                      "auth_key": "${var.opsgenie_auth_key}",
+                      "base_url": "https://api.eu.opsgenie.com",
+                      "type": "opsgenie"
+                    }
+                  ],
+                  "name": "opsgenie-eu"
+                }
+              references:
+                config.auth_key: var.opsgenie_auth_key
+            - name: email
+              manifest: |-
+                {
+                  "active": true,
+                  "config": [
+                    {
+                      "recipients": [
+                        "oncall@example.com",
+                        "sre@example.com"
+                      ],
+                      "type": "email"
+                    }
+                  ],
+                  "name": "email-on-call"
+                }
             - name: pagerduty
               manifest: |-
                 {
@@ -195,6 +300,7 @@ resources:
         argumentDocs:
             active: (Boolean) Whether the channel is active.
             auth_key: (String, Sensitive) Opsgenie API key.
+            base_url: (String) Opsgenie API base URL, for example https://api.eu.opsgenie.com for an EU account. Only for opsgenie channels. Omitting it on an existing channel retains the current value; set it to https://api.opsgenie.com explicitly to return to the default US endpoint.
             channel_id: (String) Slack channel ID (for example C0123456789) the notifications are posted to. The Logfire Slack bot must already be a member of the channel.
             config: (Block, Optional) Required channel configuration. (see below for nested schema)
             format: (String) Webhook payload format.
@@ -202,10 +308,11 @@ resources:
             include_agent_prompt: (Boolean) Whether Slack issue notifications include the "Ask your agent" MCP prompt line. Defaults to true for new Slack channels. Omitting it on an existing channel retains the current setting; set it to true explicitly to re-enable the prompt.
             install_id: (String) ID of the organization's Slack App or PagerDuty App installation, created by connecting the platform in the Logfire UI (Organization Settings -> Connections). The installation must belong to the same organization, be active, and match the channel type.
             name: (String) Channel name.
+            recipients: (Set of String) Email addresses the channel notifies, 1 to 50. Required for email channels, which need a Logfire plan with custom email recipients. Logfire normalizes each address, for example by lowercasing its domain. The provider keeps the configured spelling when Logfire stores an equivalent one. A recipient who unsubscribes leaves the channel, and Logfire rejects an update that adds them back until you remove the address from the configuration.
             region: (String) PagerDuty account region (us or eu). When omitted, Logfire uses the US Events API endpoint. Only for pagerduty channels; a pagerduty-integration channel takes its region from the connected account.
             routing_key: (String, Sensitive) PagerDuty Events API v2 integration routing key. Only for pagerduty channels; pagerduty-integration channels resolve the key from the installation instead.
             service_id: (String) Logfire's ID (a UUID) for the PagerDuty service incidents are opened on, as approved for the installation when connecting PagerDuty. This is not PagerDuty's own service ID. Required for pagerduty-integration channels.
-            type: (String) Channel type (webhook, opsgenie, pagerduty, pagerduty-integration, or slack-integration).
+            type: (String) Channel type (webhook, email, opsgenie, pagerduty, pagerduty-integration, or slack-integration).
             url: (String) Webhook URL endpoint.
         importStatements:
             - |-
@@ -222,7 +329,7 @@ resources:
               terraform import 'logfire_channel.example' "9f9b2f9e-aaaa-bbbb-cccc-ddddeeeeffff"
     logfire_dashboard:
         subCategory: ""
-        description: Manages a Logfire dashboard.
+        description: Manages a Logfire dashboard. The provider marks the dashboard as managed by the tool that applies it, and Logfire shows a Managed badge on it. A new dashboard is also locked against edits in the Logfire UI and through the Logfire MCP server unless managed_allow_edits is true. The lock does not cover the dashboards API, which the provider uses. A Logfire instance without managed dashboards ignores the marker. An existing dashboard gets the marker on its next update.
         name: logfire_dashboard
         title: logfire_dashboard Resource - logfire
         examples:
@@ -244,6 +351,7 @@ resources:
         argumentDocs:
             definition: (String) Dashboard definition JSON payload.
             id: (String) Dashboard UUID assigned by the backend.
+            managed_allow_edits: (Boolean) Whether the Logfire UI and the Logfire MCP server can edit the dashboard. Defaults to false for a new dashboard. A Logfire instance without managed dashboards, or with them turned off, ignores a configured value. Terraform then warns and plans the value again on every run until Logfire applies it. A dashboard created by an earlier provider version stays editable until you set the attribute. Removing the attribute keeps the current value. Set it to true to allow edits again.
             name: (String) Dashboard display name.
             project_id: (String) Project UUID used for API paths.
             slug: (String) Dashboard slug used in URLs.
@@ -277,7 +385,7 @@ resources:
             created_at: (String) Timestamp when the application was created.
             environment: (String) Immutable value used to overwrite deployment.environment.name when set.
             id: (String) Frontend application identifier.
-            name: (String) Immutable application name. Logfire overwrites service.name with this value.
+            name: (String) Application name. Logfire overwrites service.name with this value. The API cannot rename an application, so changing this replaces it, unless the new value is its current name in Logfire. After a rename in the Logfire UI, Terraform keeps the configured name and plans no change. Update this value to the new name to follow the rename without a replacement.
             project_id: (String) UUID of the project that owns the application.
             service_namespace: (String) Immutable value used to overwrite service.namespace when set.
             token: (String, Sensitive) An active restricted browser token. The provider recovers this value on refresh and import.

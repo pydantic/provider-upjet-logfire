@@ -36,12 +36,15 @@ type AlertInitParameters struct {
 	// Evaluation frequency, as a duration from `1m` to `24h` (for example `5m`, `20m`, `1h`). Equivalent spellings are accepted and kept as written.
 	Frequency *string `json:"frequency,omitempty" tf:"frequency,omitempty"`
 
+	// (Attributes) Track each result row as its own occurrence, keyed by the identity columns, instead of evaluating the whole result as one. Needs an organization with alert instance policies enabled, otherwise the API answers 403 alert_instances_not_enabled. Remove the attribute to evaluate the whole result as one again. The API's deprecated continuity_runs is not exposed. A new policy gets the value of missing_runs, and a change keeps the stored value unless it is lower than missing_runs. (see below for nested schema)
+	InstancePolicy *InstancePolicyInitParameters `json:"instancePolicy,omitempty" tf:"instance_policy,omitempty"`
+
 	// (String) Alert name (unique per project).
 	// Alert name (unique per project).
 	Name *string `json:"name,omitempty" tf:"name,omitempty"`
 
-	// (String) Notification rule. Must match API enum.
-	// Notification rule. Must match API enum.
+	// 11-13.01.
+	// Notification rule. Must match API enum. `instances_changed` needs `instance_policy`. It sends one notification for each run that opens or closes occurrences, listing them, from Logfire v2026-11-13.01.
 	NotifyWhen *string `json:"notifyWhen,omitempty" tf:"notify_when,omitempty"`
 
 	// (String) Project ID (UUID) used for alert API paths.
@@ -91,12 +94,15 @@ type AlertObservation struct {
 	// (String) Alert ID.
 	ID *string `json:"id,omitempty" tf:"id,omitempty"`
 
+	// (Attributes) Track each result row as its own occurrence, keyed by the identity columns, instead of evaluating the whole result as one. Needs an organization with alert instance policies enabled, otherwise the API answers 403 alert_instances_not_enabled. Remove the attribute to evaluate the whole result as one again. The API's deprecated continuity_runs is not exposed. A new policy gets the value of missing_runs, and a change keeps the stored value unless it is lower than missing_runs. (see below for nested schema)
+	InstancePolicy *InstancePolicyObservation `json:"instancePolicy,omitempty" tf:"instance_policy,omitempty"`
+
 	// (String) Alert name (unique per project).
 	// Alert name (unique per project).
 	Name *string `json:"name,omitempty" tf:"name,omitempty"`
 
-	// (String) Notification rule. Must match API enum.
-	// Notification rule. Must match API enum.
+	// 11-13.01.
+	// Notification rule. Must match API enum. `instances_changed` needs `instance_policy`. It sends one notification for each run that opens or closes occurrences, listing them, from Logfire v2026-11-13.01.
 	NotifyWhen *string `json:"notifyWhen,omitempty" tf:"notify_when,omitempty"`
 
 	// (String) Project ID (UUID) used for alert API paths.
@@ -143,13 +149,17 @@ type AlertParameters struct {
 	// +kubebuilder:validation:Optional
 	Frequency *string `json:"frequency,omitempty" tf:"frequency,omitempty"`
 
+	// (Attributes) Track each result row as its own occurrence, keyed by the identity columns, instead of evaluating the whole result as one. Needs an organization with alert instance policies enabled, otherwise the API answers 403 alert_instances_not_enabled. Remove the attribute to evaluate the whole result as one again. The API's deprecated continuity_runs is not exposed. A new policy gets the value of missing_runs, and a change keeps the stored value unless it is lower than missing_runs. (see below for nested schema)
+	// +kubebuilder:validation:Optional
+	InstancePolicy *InstancePolicyParameters `json:"instancePolicy,omitempty" tf:"instance_policy,omitempty"`
+
 	// (String) Alert name (unique per project).
 	// Alert name (unique per project).
 	// +kubebuilder:validation:Optional
 	Name *string `json:"name,omitempty" tf:"name,omitempty"`
 
-	// (String) Notification rule. Must match API enum.
-	// Notification rule. Must match API enum.
+	// 11-13.01.
+	// Notification rule. Must match API enum. `instances_changed` needs `instance_policy`. It sends one notification for each run that opens or closes occurrences, listing them, from Logfire v2026-11-13.01.
 	// +kubebuilder:validation:Optional
 	NotifyWhen *string `json:"notifyWhen,omitempty" tf:"notify_when,omitempty"`
 
@@ -229,6 +239,67 @@ type ChannelAssignmentsParameters struct {
 	// ID of a `logfire_schedule`. The channel is notified only inside the schedule's windows. Omit it to notify the channel at all times.
 	// +kubebuilder:validation:Optional
 	ScheduleID *string `json:"scheduleId,omitempty" tf:"schedule_id,omitempty"`
+}
+
+type InstancePolicyInitParameters struct {
+
+	// (List of String) Result columns whose values identify an occurrence. One to 8 unique names of 1 to 128 characters.
+	// Result columns whose values identify an occurrence. One to 8 unique names of 1 to 128 characters.
+	IdentityColumns []*string `json:"identityColumns,omitempty" tf:"identity_columns,omitempty"`
+
+	// (String) The close reason of an occurrence that is missing for missing_runs runs. One of no_longer_matching or expire.
+	// The close reason of an occurrence that is missing for `missing_runs` runs. One of `no_longer_matching` or `expire`.
+	MissingBehavior *string `json:"missingBehavior,omitempty" tf:"missing_behavior,omitempty"`
+
+	// (Number) Consecutive runs without the occurrence, 1 to 100, before it closes.
+	// Consecutive runs without the occurrence, 1 to 100, before it closes.
+	MissingRuns *float64 `json:"missingRuns,omitempty" tf:"missing_runs,omitempty"`
+
+	// (Number) Consecutive matching runs, 1 to 100, before a new occurrence fires.
+	// Consecutive matching runs, 1 to 100, before a new occurrence fires.
+	PendingRuns *float64 `json:"pendingRuns,omitempty" tf:"pending_runs,omitempty"`
+}
+
+type InstancePolicyObservation struct {
+
+	// (List of String) Result columns whose values identify an occurrence. One to 8 unique names of 1 to 128 characters.
+	// Result columns whose values identify an occurrence. One to 8 unique names of 1 to 128 characters.
+	IdentityColumns []*string `json:"identityColumns,omitempty" tf:"identity_columns,omitempty"`
+
+	// (String) The close reason of an occurrence that is missing for missing_runs runs. One of no_longer_matching or expire.
+	// The close reason of an occurrence that is missing for `missing_runs` runs. One of `no_longer_matching` or `expire`.
+	MissingBehavior *string `json:"missingBehavior,omitempty" tf:"missing_behavior,omitempty"`
+
+	// (Number) Consecutive runs without the occurrence, 1 to 100, before it closes.
+	// Consecutive runs without the occurrence, 1 to 100, before it closes.
+	MissingRuns *float64 `json:"missingRuns,omitempty" tf:"missing_runs,omitempty"`
+
+	// (Number) Consecutive matching runs, 1 to 100, before a new occurrence fires.
+	// Consecutive matching runs, 1 to 100, before a new occurrence fires.
+	PendingRuns *float64 `json:"pendingRuns,omitempty" tf:"pending_runs,omitempty"`
+}
+
+type InstancePolicyParameters struct {
+
+	// (List of String) Result columns whose values identify an occurrence. One to 8 unique names of 1 to 128 characters.
+	// Result columns whose values identify an occurrence. One to 8 unique names of 1 to 128 characters.
+	// +kubebuilder:validation:Optional
+	IdentityColumns []*string `json:"identityColumns" tf:"identity_columns,omitempty"`
+
+	// (String) The close reason of an occurrence that is missing for missing_runs runs. One of no_longer_matching or expire.
+	// The close reason of an occurrence that is missing for `missing_runs` runs. One of `no_longer_matching` or `expire`.
+	// +kubebuilder:validation:Optional
+	MissingBehavior *string `json:"missingBehavior" tf:"missing_behavior,omitempty"`
+
+	// (Number) Consecutive runs without the occurrence, 1 to 100, before it closes.
+	// Consecutive runs without the occurrence, 1 to 100, before it closes.
+	// +kubebuilder:validation:Optional
+	MissingRuns *float64 `json:"missingRuns" tf:"missing_runs,omitempty"`
+
+	// (Number) Consecutive matching runs, 1 to 100, before a new occurrence fires.
+	// Consecutive matching runs, 1 to 100, before a new occurrence fires.
+	// +kubebuilder:validation:Optional
+	PendingRuns *float64 `json:"pendingRuns" tf:"pending_runs,omitempty"`
 }
 
 // AlertSpec defines the desired state of Alert

@@ -20,6 +20,10 @@ type DashboardInitParameters struct {
 	// Dashboard definition JSON payload.
 	Definition *string `json:"definition,omitempty" tf:"definition,omitempty"`
 
+	// (Boolean) Whether the Logfire UI and the Logfire MCP server can edit the dashboard. Defaults to false for a new dashboard. A Logfire instance without managed dashboards, or with them turned off, ignores a configured value. A dashboard created by an earlier provider version stays editable until you set the attribute. Removing the attribute keeps the current value. Set it to true to allow edits again.
+	// Whether the Logfire UI and the Logfire MCP server can edit the dashboard. Defaults to `false` for a new dashboard. A Logfire instance without managed dashboards, or with them turned off, ignores a configured value. A dashboard created by an earlier provider version stays editable until you set the attribute. Removing the attribute keeps the current value. Set it to `true` to allow edits again.
+	ManagedAllowEdits *bool `json:"managedAllowEdits,omitempty" tf:"managed_allow_edits,omitempty"`
+
 	// (String) Dashboard display name.
 	// Dashboard display name.
 	Name *string `json:"name,omitempty" tf:"name,omitempty"`
@@ -51,6 +55,10 @@ type DashboardObservation struct {
 	// (String) Dashboard UUID assigned by the backend.
 	ID *string `json:"id,omitempty" tf:"id,omitempty"`
 
+	// (Boolean) Whether the Logfire UI and the Logfire MCP server can edit the dashboard. Defaults to false for a new dashboard. A Logfire instance without managed dashboards, or with them turned off, ignores a configured value. A dashboard created by an earlier provider version stays editable until you set the attribute. Removing the attribute keeps the current value. Set it to true to allow edits again.
+	// Whether the Logfire UI and the Logfire MCP server can edit the dashboard. Defaults to `false` for a new dashboard. A Logfire instance without managed dashboards, or with them turned off, ignores a configured value. A dashboard created by an earlier provider version stays editable until you set the attribute. Removing the attribute keeps the current value. Set it to `true` to allow edits again.
+	ManagedAllowEdits *bool `json:"managedAllowEdits,omitempty" tf:"managed_allow_edits,omitempty"`
+
 	// (String) Dashboard display name.
 	// Dashboard display name.
 	Name *string `json:"name,omitempty" tf:"name,omitempty"`
@@ -70,6 +78,11 @@ type DashboardParameters struct {
 	// Dashboard definition JSON payload.
 	// +kubebuilder:validation:Optional
 	Definition *string `json:"definition,omitempty" tf:"definition,omitempty"`
+
+	// (Boolean) Whether the Logfire UI and the Logfire MCP server can edit the dashboard. Defaults to false for a new dashboard. A Logfire instance without managed dashboards, or with them turned off, ignores a configured value. A dashboard created by an earlier provider version stays editable until you set the attribute. Removing the attribute keeps the current value. Set it to true to allow edits again.
+	// Whether the Logfire UI and the Logfire MCP server can edit the dashboard. Defaults to `false` for a new dashboard. A Logfire instance without managed dashboards, or with them turned off, ignores a configured value. A dashboard created by an earlier provider version stays editable until you set the attribute. Removing the attribute keeps the current value. Set it to `true` to allow edits again.
+	// +kubebuilder:validation:Optional
+	ManagedAllowEdits *bool `json:"managedAllowEdits,omitempty" tf:"managed_allow_edits,omitempty"`
 
 	// (String) Dashboard display name.
 	// Dashboard display name.
@@ -123,7 +136,7 @@ type DashboardStatus struct {
 // +kubebuilder:subresource:status
 // +kubebuilder:storageversion
 
-// Dashboard is the Schema for the Dashboards API. Manages a Logfire dashboard.
+// Dashboard is the Schema for the Dashboards API. Manages a Logfire dashboard. The provider marks the dashboard as managed by the tool that applies it, and Logfire shows a Managed badge on it. A new dashboard is also locked against edits in the Logfire UI and through the Logfire MCP server unless managed_allow_edits is true. The lock does not cover the dashboards API, which the provider uses. A Logfire instance without managed dashboards ignores the marker. An existing dashboard gets the marker on its next update.
 // +kubebuilder:printcolumn:name="SYNCED",type="string",JSONPath=".status.conditions[?(@.type=='Synced')].status"
 // +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="EXTERNAL-NAME",type="string",JSONPath=".metadata.annotations.crossplane\\.io/external-name"

@@ -35,7 +35,12 @@ spec:
     schema:
       openAPIV3Schema:
         description: Dashboard is the Schema for the Dashboards API. Manages a Logfire
-          dashboard.
+          dashboard. The provider marks the dashboard as managed by the tool that
+          applies it, and Logfire shows a Managed badge on it. A new dashboard is
+          also locked against edits in the Logfire UI and through the Logfire MCP
+          server unless managed_allow_edits is true. The lock does not cover the dashboards
+          API, which the provider uses. A Logfire instance without managed dashboards
+          ignores the marker. An existing dashboard gets the marker on its next update.
         properties:
           apiVersion:
             description: |-
@@ -78,6 +83,11 @@ spec:
                       (String) Dashboard definition JSON payload.
                       Dashboard definition JSON payload.
                     type: string
+                  managedAllowEdits:
+                    description: |-
+                      (Boolean) Whether the Logfire UI and the Logfire MCP server can edit the dashboard. Defaults to false for a new dashboard. A Logfire instance without managed dashboards, or with them turned off, ignores a configured value. A dashboard created by an earlier provider version stays editable until you set the attribute. Removing the attribute keeps the current value. Set it to true to allow edits again.
+                      Whether the Logfire UI and the Logfire MCP server can edit the dashboard. Defaults to `false` for a new dashboard. A Logfire instance without managed dashboards, or with them turned off, ignores a configured value. A dashboard created by an earlier provider version stays editable until you set the attribute. Removing the attribute keeps the current value. Set it to `true` to allow edits again.
+                    type: boolean
                   name:
                     description: |-
                       (String) Dashboard display name.
@@ -186,6 +196,11 @@ spec:
                       (String) Dashboard definition JSON payload.
                       Dashboard definition JSON payload.
                     type: string
+                  managedAllowEdits:
+                    description: |-
+                      (Boolean) Whether the Logfire UI and the Logfire MCP server can edit the dashboard. Defaults to false for a new dashboard. A Logfire instance without managed dashboards, or with them turned off, ignores a configured value. A dashboard created by an earlier provider version stays editable until you set the attribute. Removing the attribute keeps the current value. Set it to true to allow edits again.
+                      Whether the Logfire UI and the Logfire MCP server can edit the dashboard. Defaults to `false` for a new dashboard. A Logfire instance without managed dashboards, or with them turned off, ignores a configured value. A dashboard created by an earlier provider version stays editable until you set the attribute. Removing the attribute keeps the current value. Set it to `true` to allow edits again.
+                    type: boolean
                   name:
                     description: |-
                       (String) Dashboard display name.
@@ -388,6 +403,11 @@ spec:
                   id:
                     description: (String) Dashboard UUID assigned by the backend.
                     type: string
+                  managedAllowEdits:
+                    description: |-
+                      (Boolean) Whether the Logfire UI and the Logfire MCP server can edit the dashboard. Defaults to false for a new dashboard. A Logfire instance without managed dashboards, or with them turned off, ignores a configured value. A dashboard created by an earlier provider version stays editable until you set the attribute. Removing the attribute keeps the current value. Set it to true to allow edits again.
+                      Whether the Logfire UI and the Logfire MCP server can edit the dashboard. Defaults to `false` for a new dashboard. A Logfire instance without managed dashboards, or with them turned off, ignores a configured value. A dashboard created by an earlier provider version stays editable until you set the attribute. Removing the attribute keeps the current value. Set it to `true` to allow edits again.
+                    type: boolean
                   name:
                     description: |-
                       (String) Dashboard display name.
