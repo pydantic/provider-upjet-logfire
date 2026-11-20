@@ -118,7 +118,6 @@ func (tr *Alert) LateInitialize(attrs []byte) (bool, error) {
 		return false, errors.Wrap(err, "failed to unmarshal Terraform state parameters for late-initialization")
 	}
 	opts := []resource.GenericLateInitializerOption{resource.WithZeroValueJSONOmitEmptyFilter(resource.CNameWildcard)}
-	opts = append(opts, resource.WithNameFilter("ChannelAssignments.ScheduleID"))
 	opts = append(opts, resource.WithNameFilter("Description"))
 	opts = append(opts, resource.WithNameFilter("Environments"))
 	opts = append(opts, resource.WithNameFilter("InstancePolicy"))

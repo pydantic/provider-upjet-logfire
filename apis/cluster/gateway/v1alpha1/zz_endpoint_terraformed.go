@@ -119,9 +119,6 @@ func (tr *Endpoint) LateInitialize(attrs []byte) (bool, error) {
 	}
 	opts := []resource.GenericLateInitializerOption{resource.WithZeroValueJSONOmitEmptyFilter(resource.CNameWildcard)}
 	opts = append(opts, resource.WithNameFilter("Description"))
-	opts = append(opts, resource.WithNameFilter("Providers.Active"))
-	opts = append(opts, resource.WithNameFilter("Providers.Priority"))
-	opts = append(opts, resource.WithNameFilter("Providers.Weight"))
 
 	li := resource.NewGenericLateInitializer(opts...)
 	return li.LateInitialize(&tr.Spec.ForProvider, params)

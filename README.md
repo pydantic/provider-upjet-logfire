@@ -101,9 +101,12 @@ Resources follow Terraform's semantics, with these points to know:
 - The first reconcile of an imported object clears any optional value the spec
   leaves out, such as a description or a spending limit window. To import without
   changing the object, create the resource with `managementPolicies: ["Observe"]`
-  and the `crossplane.io/external-name` annotation set to its ID, copy the values
-  from `status.atProvider` into `spec.forProvider`, then remove
-  `managementPolicies`.
+  and the `crossplane.io/external-name` annotation set to its Terraform import ID,
+  such as `<project_id>/<alert_id>` for an alert. The
+  `terraform-provider-logfire` documentation lists the import ID of each
+  resource. Once the resource is ready, the annotation holds the object's ID.
+  Copy the values from `status.atProvider` into `spec.forProvider`, then remove
+  `managementPolicies`. Read and write tokens cannot be imported.
 - A `SpendingLimits` or `ProjectSpendingLimits` resource owns all three windows.
   A window it leaves out has no limit, and deleting the resource removes every
   limit.

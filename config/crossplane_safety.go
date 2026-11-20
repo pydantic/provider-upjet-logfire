@@ -41,7 +41,12 @@ func LateInitializeComputedOnly() ujconfig.ResourceOption {
 					ignored = append(ignored, path)
 					continue
 				}
-				if nested, ok := s.Elem.(*schema.Resource); ok {
+				// Late-initialization fills a collection only when the spec omits
+				// it, and then copies it whole. Skipping a field inside a set or a
+				// list would copy elements without it, and Upjet would then ignore
+				// changes at an element index, which Terraform rejects for sets. So
+				// only a single nested block, such as a channel's config, is walked.
+				if nested, ok := s.Elem.(*schema.Resource); ok && s.Type == schema.TypeList && s.MaxItems == 1 {
 					walk(path+".", nested.Schema)
 				}
 			}

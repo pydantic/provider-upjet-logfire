@@ -13,7 +13,9 @@ BREAKING CHANGES:
   `instancePolicy`, or a spending limit window, now clears it, as in Terraform.
   To import an object, copy its current optional values into the spec, or the
   first reconcile clears them. Values that earlier late-initialization wrote to
-  a spec stay until you remove them.
+  a spec stay until you remove them. Before upgrading, add to the spec any
+  optional value that exists only in Logfire and should stay, such as a spending
+  limit set in the UI on a resource whose reconciliation is paused.
 
 FEATURES:
 

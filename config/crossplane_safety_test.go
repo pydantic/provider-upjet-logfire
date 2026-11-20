@@ -28,10 +28,10 @@ func TestLateInitializationSkipsClearableFields(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			for resource, fields := range map[string]struct{ skipped, kept []string }{
 				"logfire_project":                 {skipped: []string{"description"}, kept: []string{"visibility"}},
-				"logfire_alert":                   {skipped: []string{"description", "environments", "instance_policy"}, kept: []string{"active"}},
+				"logfire_alert":                   {skipped: []string{"description", "environments", "instance_policy"}, kept: []string{"active", "channel_assignments.schedule_id"}},
 				"logfire_channel":                 {skipped: []string{"config.recipients", "config.url"}, kept: []string{"active", "config.base_url"}},
 				"logfire_gateway_spending_limits": {skipped: []string{"daily_usd", "monthly_usd", "weekly_usd"}},
-				"logfire_gateway_endpoint":        {skipped: []string{"description"}},
+				"logfire_gateway_endpoint":        {skipped: []string{"description"}, kept: []string{"providers.weight"}},
 				"logfire_read_token":              {kept: []string{"expires_at"}},
 				"logfire_write_token":             {kept: []string{"expires_at"}},
 			} {
