@@ -1,0 +1,15 @@
+apiVersion: gateway.logfire.pydantic.dev/v1alpha1
+kind: ProjectSpendingLimits
+metadata:
+  annotations:
+    meta.upbound.io/example-id: gateway/v1alpha1/projectspendinglimits
+  labels:
+    testing.upbound.io/example-name: example
+  name: example
+spec:
+  forProvider:
+    monthlyUsd: 1000
+    projectIdSelector:
+      matchLabels:
+        testing.upbound.io/example-name: example
+    weeklyUsd: 200

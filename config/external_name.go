@@ -7,12 +7,15 @@ import (
 // ExternalNameConfigs contains all external name configurations for this
 // provider.
 var ExternalNameConfigs = map[string]config.ExternalName{
-	"logfire_alert":       config.IdentifierFromProvider,
-	"logfire_channel":     config.IdentifierFromProvider,
-	"logfire_dashboard":   config.IdentifierFromProvider,
-	"logfire_project":     config.IdentifierFromProvider,
-	"logfire_read_token":  config.IdentifierFromProvider,
-	"logfire_write_token": config.IdentifierFromProvider,
+	"logfire_alert":                           config.IdentifierFromProvider,
+	"logfire_channel":                         config.IdentifierFromProvider,
+	"logfire_dashboard":                       config.IdentifierFromProvider,
+	"logfire_gateway_endpoint":                config.IdentifierFromProvider,
+	"logfire_gateway_project_spending_limits": config.IdentifierFromProvider,
+	"logfire_gateway_spending_limits":         config.IdentifierFromProvider,
+	"logfire_project":                         config.IdentifierFromProvider,
+	"logfire_read_token":                      config.IdentifierFromProvider,
+	"logfire_write_token":                     config.IdentifierFromProvider,
 }
 
 // ExternalNameConfigurations applies all external name configs listed in the

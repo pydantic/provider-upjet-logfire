@@ -48,6 +48,11 @@ func (in *DashboardInitParameters) DeepCopyInto(out *DashboardInitParameters) {
 		*out = new(string)
 		**out = **in
 	}
+	if in.ManagedAllowEdits != nil {
+		in, out := &in.ManagedAllowEdits, &out.ManagedAllowEdits
+		*out = new(bool)
+		**out = **in
+	}
 	if in.Name != nil {
 		in, out := &in.Name, &out.Name
 		*out = new(string)
@@ -130,6 +135,11 @@ func (in *DashboardObservation) DeepCopyInto(out *DashboardObservation) {
 		*out = new(string)
 		**out = **in
 	}
+	if in.ManagedAllowEdits != nil {
+		in, out := &in.ManagedAllowEdits, &out.ManagedAllowEdits
+		*out = new(bool)
+		**out = **in
+	}
 	if in.Name != nil {
 		in, out := &in.Name, &out.Name
 		*out = new(string)
@@ -163,6 +173,11 @@ func (in *DashboardParameters) DeepCopyInto(out *DashboardParameters) {
 	if in.Definition != nil {
 		in, out := &in.Definition, &out.Definition
 		*out = new(string)
+		**out = **in
+	}
+	if in.ManagedAllowEdits != nil {
+		in, out := &in.ManagedAllowEdits, &out.ManagedAllowEdits
+		*out = new(bool)
 		**out = **in
 	}
 	if in.Name != nil {

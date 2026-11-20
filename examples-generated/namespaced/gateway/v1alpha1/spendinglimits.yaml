@@ -1,0 +1,13 @@
+apiVersion: gateway.logfire.m.pydantic.dev/v1alpha1
+kind: SpendingLimits
+metadata:
+  annotations:
+    meta.upbound.io/example-id: gateway/v1alpha1/spendinglimits
+  labels:
+    testing.upbound.io/example-name: this
+  name: this
+  namespace: crossplane-system
+spec:
+  forProvider:
+    dailyUsd: 500
+    monthlyUsd: 10000

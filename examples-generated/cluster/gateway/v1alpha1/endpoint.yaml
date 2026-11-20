@@ -1,0 +1,16 @@
+apiVersion: gateway.logfire.pydantic.dev/v1alpha1
+kind: Endpoint
+metadata:
+  annotations:
+    meta.upbound.io/example-id: gateway/v1alpha1/endpoint
+  labels:
+    testing.upbound.io/example-name: default
+  name: default
+spec:
+  forProvider:
+    description: Prefer OpenAI and fall back to Anthropic.
+    providers:
+    - priority: 10
+      providerId: REPLACE-WITH-openai-PROVIDER-UUID
+    - providerId: REPLACE-WITH-anthropic-PROVIDER-UUID
+    slug: default
