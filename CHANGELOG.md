@@ -8,6 +8,12 @@ BREAKING CHANGES:
   by this provider is locked against edits in the Logfire UI and through MCP.
   Set `managedAllowEdits: true` to allow those edits. Existing dashboards stay
   editable.
+- Late-initialization no longer copies optional fields that have no Logfire
+  default into the spec. Removing such a field, such as a description, an alert
+  `instancePolicy`, or a spending limit window, now clears it, as in Terraform.
+  To import an object, copy its current optional values into the spec, or the
+  first reconcile clears them. Values that earlier late-initialization wrote to
+  a spec stay until you remove them.
 
 FEATURES:
 
@@ -21,6 +27,15 @@ FEATURES:
   organization and project spending limits. `Endpoint.providers[].providerId`
   takes the UUID of a Gateway provider created outside Crossplane, because this
   provider does not generate a Gateway provider resource.
+
+BUG FIXES:
+
+- An `Alert` that names its channel with `channelIdRef` or `channelIdSelector`
+  keeps reconciling after later edits. Crossplane's reference resolver saved only
+  the fields it changed with a server-side apply, which dropped `projectId` or
+  `channelAssignments`. The `Alert` then failed validation on every reconcile and
+  could not be deleted. Kinds with references now resolve them first and save the
+  whole object. An `Alert` already in that state recovers on its next reconcile.
 
 ## v0.3.0 (2026-10-21)
 

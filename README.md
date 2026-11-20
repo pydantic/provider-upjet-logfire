@@ -61,6 +61,11 @@ Example secret payload:
 }
 ```
 
+Use an organization API key that is not bound to one project. A key bound to a
+project can create other projects but cannot read them, so a new `Project` never
+becomes ready. The key needs the scopes of the kinds you manage, as listed in the
+`terraform-provider-logfire` documentation.
+
 ## Tokens
 
 A read or write token value is returned only at creation. The provider keeps it
@@ -84,6 +89,53 @@ spec:
 If `writeConnectionSecretToRef` is omitted, or the secret is deleted later, the
 token cannot be read again. Delete the resource and create it again to mint a new
 token.
+
+## Lifecycle
+
+Resources follow Terraform's semantics, with these points to know:
+
+- Removing an optional field from the spec clears it in Logfire. Fields with a
+  Logfire default, such as `active`, `visibility`, and `managedAllowEdits`, keep
+  their current value instead, and so does a token's `expiresAt`.
+- To import an existing object, set the `crossplane.io/external-name` annotation
+  to its ID and copy its current optional values into the spec. The first
+  reconcile clears any optional value the spec leaves out, such as a description
+  or a spending limit window.
+- A `SpendingLimits` or `ProjectSpendingLimits` resource owns all three windows.
+  A window it leaves out has no limit, and deleting the resource removes every
+  limit.
+- Changing a field that Terraform can only change by replacing the object is
+  refused: a dashboard or endpoint `slug`, a `projectId`, or a token `expiresAt`.
+  The resource reports `Synced=False` with a `prevent_destroy` error. Delete the
+  resource and create it with the new value instead.
+
+Delete a project's resources before the project. Logfire answers a deleted
+project with the same 403 as a project the key cannot reach, so an alert,
+dashboard, token, or `ProjectSpendingLimits` whose project is gone can be neither
+observed nor deleted. A `ClusterUsage` keeps the project until the resources that
+use it are gone:
+
+```yaml
+apiVersion: protection.crossplane.io/v1beta1
+kind: ClusterUsage
+metadata:
+  name: example-alert-uses-project
+spec:
+  replayDeletion: true
+  of:
+    apiVersion: project.logfire.pydantic.dev/v1alpha1
+    kind: Project
+    resourceRef:
+      name: example
+  by:
+    apiVersion: alert.logfire.pydantic.dev/v1alpha1
+    kind: Alert
+    resourceRef:
+      name: example
+```
+
+If a resource is already stuck after its project was deleted, confirm the
+project is gone and remove the resource's finalizer.
 
 ## Developing
 
