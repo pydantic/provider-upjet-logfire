@@ -2,6 +2,7 @@ package config
 
 import (
 	"context"
+	"reflect"
 	"sort"
 
 	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
@@ -91,6 +92,10 @@ func newReferenceInitializer(c client.Client) managed.Initializer {
 		if err := c.Update(ctx, resolved); err != nil {
 			return err
 		}
-		return c.Get(ctx, client.ObjectKeyFromObject(mg), mg)
+		// Carry on with the object the API server returned. Reading it back
+		// through the manager's cache could return the old spec, which the
+		// reference resolver would then resolve and save as a partial apply.
+		reflect.ValueOf(mg).Elem().Set(reflect.ValueOf(resolved).Elem())
+		return nil
 	})
 }

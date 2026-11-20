@@ -94,13 +94,16 @@ token.
 
 Resources follow Terraform's semantics, with these points to know:
 
-- Removing an optional field from the spec clears it in Logfire. Fields with a
-  Logfire default, such as `active`, `visibility`, and `managedAllowEdits`, keep
-  their current value instead, and so does a token's `expiresAt`.
-- To import an existing object, set the `crossplane.io/external-name` annotation
-  to its ID and copy its current optional values into the spec. The first
-  reconcile clears any optional value the spec leaves out, such as a description
-  or a spending limit window.
+- Removing an optional field from the spec clears it in Logfire. A token's
+  `expiresAt` keeps its current value instead. A field with a Logfire default,
+  such as `active` or `visibility`, keeps a non-default value but returns to the
+  default from `false`, so set such a field rather than removing it.
+- The first reconcile of an imported object clears any optional value the spec
+  leaves out, such as a description or a spending limit window. To import without
+  changing the object, create the resource with `managementPolicies: ["Observe"]`
+  and the `crossplane.io/external-name` annotation set to its ID, copy the values
+  from `status.atProvider` into `spec.forProvider`, then remove
+  `managementPolicies`.
 - A `SpendingLimits` or `ProjectSpendingLimits` resource owns all three windows.
   A window it leaves out has no limit, and deleting the resource removes every
   limit.

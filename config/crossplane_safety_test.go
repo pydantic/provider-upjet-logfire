@@ -84,21 +84,28 @@ func TestReferenceInitializerSavesWholeResolvedObject(t *testing.T) {
 	alert.Spec.ForProvider.Description = ptr.To("kept")
 
 	updates := 0
-	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(project, channel, alert).
-		WithInterceptorFuncs(interceptor.Funcs{
-			Update: func(ctx context.Context, c client.WithWatch, obj client.Object, opts ...client.UpdateOption) error {
-				updates++
-				return c.Update(ctx, obj, opts...)
-			},
-			Patch: func(context.Context, client.WithWatch, client.Object, client.Patch, ...client.PatchOption) error {
-				t.Error("the initializer must save with an update, not a patch")
-				return nil
-			},
-		}).Build()
+	store := fake.NewClientBuilder().WithScheme(scheme).WithObjects(project, channel, alert).Build()
+	// The manager's client reads the alert from a cache that can lag behind an update.
+	c := interceptor.NewClient(store, interceptor.Funcs{
+		Update: func(ctx context.Context, c client.WithWatch, obj client.Object, opts ...client.UpdateOption) error {
+			updates++
+			return c.Update(ctx, obj, opts...)
+		},
+		Get: func(ctx context.Context, c client.WithWatch, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
+			if updates > 0 && key.Name == "alert" {
+				t.Error("the initializer must not read the alert back through the cache, which may be stale")
+			}
+			return c.Get(ctx, key, obj, opts...)
+		},
+		Patch: func(context.Context, client.WithWatch, client.Object, client.Patch, ...client.PatchOption) error {
+			t.Error("the initializer must save with an update, not a patch")
+			return nil
+		},
+	})
 
 	initialize := newReferenceInitializer(c)
 	mg := &alertv1alpha1.Alert{}
-	if err := c.Get(context.Background(), client.ObjectKey{Name: "alert"}, mg); err != nil {
+	if err := store.Get(context.Background(), client.ObjectKey{Name: "alert"}, mg); err != nil {
 		t.Fatal(err)
 	}
 	for range 2 {
@@ -111,7 +118,7 @@ func TestReferenceInitializerSavesWholeResolvedObject(t *testing.T) {
 	}
 
 	stored := &alertv1alpha1.Alert{}
-	if err := c.Get(context.Background(), client.ObjectKey{Name: "alert"}, stored); err != nil {
+	if err := store.Get(context.Background(), client.ObjectKey{Name: "alert"}, stored); err != nil {
 		t.Fatal(err)
 	}
 	p := stored.Spec.ForProvider
@@ -119,8 +126,8 @@ func TestReferenceInitializerSavesWholeResolvedObject(t *testing.T) {
 		ptr.Deref(p.ChannelAssignments[0].ChannelID, "") != "channel-uuid" || ptr.Deref(p.Description, "") != "kept" {
 		t.Errorf("stored spec = %+v, want both references resolved and other fields kept", p)
 	}
-	if ptr.Deref(mg.Spec.ForProvider.ProjectID, "") != "project-uuid" {
-		t.Error("the reconciled object must carry the resolved spec")
+	if ptr.Deref(mg.Spec.ForProvider.ProjectID, "") != "project-uuid" || mg.GetResourceVersion() != stored.GetResourceVersion() {
+		t.Error("the reconciled object must be the one the API server stored")
 	}
 
 	// A reference that does not resolve is left for crossplane-runtime's resolver to report.
