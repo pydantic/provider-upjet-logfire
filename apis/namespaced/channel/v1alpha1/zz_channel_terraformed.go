@@ -118,6 +118,15 @@ func (tr *Channel) LateInitialize(attrs []byte) (bool, error) {
 		return false, errors.Wrap(err, "failed to unmarshal Terraform state parameters for late-initialization")
 	}
 	opts := []resource.GenericLateInitializerOption{resource.WithZeroValueJSONOmitEmptyFilter(resource.CNameWildcard)}
+	opts = append(opts, resource.WithNameFilter("Config.AuthKey"))
+	opts = append(opts, resource.WithNameFilter("Config.ChannelID"))
+	opts = append(opts, resource.WithNameFilter("Config.Format"))
+	opts = append(opts, resource.WithNameFilter("Config.InstallID"))
+	opts = append(opts, resource.WithNameFilter("Config.Recipients"))
+	opts = append(opts, resource.WithNameFilter("Config.Region"))
+	opts = append(opts, resource.WithNameFilter("Config.RoutingKey"))
+	opts = append(opts, resource.WithNameFilter("Config.ServiceID"))
+	opts = append(opts, resource.WithNameFilter("Config.URL"))
 
 	li := resource.NewGenericLateInitializer(opts...)
 	return li.LateInitialize(&tr.Spec.ForProvider, params)

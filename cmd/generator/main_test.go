@@ -317,3 +317,41 @@ func TestNormalizeGeneratedExamples(t *testing.T) {
 		t.Fatalf("expected normalized example to drop leading blank lines: %q", string(content))
 	}
 }
+
+func TestFixGeneratedReferenceResolvers(t *testing.T) {
+	root := t.TempDir()
+	dir := filepath.Join(root, "internal", "controller", "cluster", "alert", "alert")
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(dir, "zz_controller.go")
+	generated := "import (\n\tfeatures \"github.com/pydantic/provider-upjet-logfire/internal/features\"\n)\n" +
+		"\topts := []managed.ReconcilerOption{\n\t\tmanaged.WithInitializers(initializers),\n\t}\n"
+	if err := os.WriteFile(path, []byte(generated), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := fixGeneratedReferenceResolvers(root); err != nil {
+		t.Fatal(err)
+	}
+	got, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{
+		"\treference \"github.com/pydantic/provider-upjet-logfire/internal/reference\"\n",
+		"\t\tmanaged.WithInitializers(initializers),\n\t\tmanaged.WithReferenceResolver(reference.NewResolver(mgr.GetClient())),\n",
+	} {
+		if !strings.Contains(string(got), want) {
+			t.Errorf("controller missing %q:\n%s", want, got)
+		}
+	}
+
+	// A template change that moves the anchor must fail generation, not ship
+	// a controller with the crossplane-runtime default resolver.
+	if err := os.WriteFile(path, []byte("package alert\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := fixGeneratedReferenceResolvers(root); err == nil {
+		t.Error("want an error when the template anchor is missing")
+	}
+}
