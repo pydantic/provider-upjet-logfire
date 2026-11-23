@@ -13,6 +13,7 @@ import (
 	v1alpha1 "github.com/pydantic/provider-upjet-logfire/apis/cluster/alert/v1alpha1"
 	v1alpha1channel "github.com/pydantic/provider-upjet-logfire/apis/cluster/channel/v1alpha1"
 	v1alpha1dashboard "github.com/pydantic/provider-upjet-logfire/apis/cluster/dashboard/v1alpha1"
+	v1alpha1gateway "github.com/pydantic/provider-upjet-logfire/apis/cluster/gateway/v1alpha1"
 	v1alpha1project "github.com/pydantic/provider-upjet-logfire/apis/cluster/project/v1alpha1"
 	v1alpha1token "github.com/pydantic/provider-upjet-logfire/apis/cluster/token/v1alpha1"
 	v1alpha1cluster "github.com/pydantic/provider-upjet-logfire/apis/cluster/v1alpha1"
@@ -25,6 +26,7 @@ func init() {
 		v1alpha1.SchemeBuilder.AddToScheme,
 		v1alpha1channel.SchemeBuilder.AddToScheme,
 		v1alpha1dashboard.SchemeBuilder.AddToScheme,
+		v1alpha1gateway.SchemeBuilder.AddToScheme,
 		v1alpha1project.SchemeBuilder.AddToScheme,
 		v1alpha1token.SchemeBuilder.AddToScheme,
 		v1alpha1cluster.SchemeBuilder.AddToScheme,

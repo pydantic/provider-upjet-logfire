@@ -1,5 +1,27 @@
 # Changelog
 
+## (unreleased)
+
+BREAKING CHANGES:
+
+- On Logfire instances with managed dashboards enabled, a `Dashboard` created
+  by this provider is locked against edits in the Logfire UI and through MCP.
+  Set `managedAllowEdits: true` to allow those edits. Existing dashboards stay
+  editable.
+
+FEATURES:
+
+- Bundle `terraform-provider-logfire` v0.3.0.
+- `Dashboard` marks dashboards as managed and adds `managedAllowEdits`.
+- `Alert` adds `instancePolicy` for per-occurrence notifications.
+- `Channel` adds `email` channels with `recipients`, and `baseUrl` for
+  Opsgenie channels outside the US region.
+- Add `Endpoint`, `SpendingLimits`, and `ProjectSpendingLimits` in the `gateway`
+  group. They manage an AI Gateway endpoint and its providers, and the
+  organization and project spending limits. `Endpoint.providers[].providerId`
+  takes the UUID of a Gateway provider created outside Crossplane, because this
+  provider does not generate a Gateway provider resource.
+
 ## v0.3.0 (2026-10-21)
 
 SECURITY:

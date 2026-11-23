@@ -12,6 +12,9 @@ import (
 	alert "github.com/pydantic/provider-upjet-logfire/internal/controller/namespaced/alert/alert"
 	channel "github.com/pydantic/provider-upjet-logfire/internal/controller/namespaced/channel/channel"
 	dashboard "github.com/pydantic/provider-upjet-logfire/internal/controller/namespaced/dashboard/dashboard"
+	endpoint "github.com/pydantic/provider-upjet-logfire/internal/controller/namespaced/gateway/endpoint"
+	projectspendinglimits "github.com/pydantic/provider-upjet-logfire/internal/controller/namespaced/gateway/projectspendinglimits"
+	spendinglimits "github.com/pydantic/provider-upjet-logfire/internal/controller/namespaced/gateway/spendinglimits"
 	project "github.com/pydantic/provider-upjet-logfire/internal/controller/namespaced/project/project"
 	providerconfig "github.com/pydantic/provider-upjet-logfire/internal/controller/namespaced/providerconfig"
 	readtoken "github.com/pydantic/provider-upjet-logfire/internal/controller/namespaced/token/readtoken"
@@ -25,6 +28,9 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 		alert.Setup,
 		channel.Setup,
 		dashboard.Setup,
+		endpoint.Setup,
+		projectspendinglimits.Setup,
+		spendinglimits.Setup,
 		project.Setup,
 		providerconfig.Setup,
 		readtoken.Setup,
@@ -44,6 +50,9 @@ func SetupGated(mgr ctrl.Manager, o controller.Options) error {
 		alert.SetupGated,
 		channel.SetupGated,
 		dashboard.SetupGated,
+		endpoint.SetupGated,
+		projectspendinglimits.SetupGated,
+		spendinglimits.SetupGated,
 		project.SetupGated,
 		providerconfig.SetupGated,
 		readtoken.SetupGated,

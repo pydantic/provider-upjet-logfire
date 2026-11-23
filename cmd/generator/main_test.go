@@ -250,6 +250,51 @@ spec:
 	}
 }
 
+func TestFixGeneratedGatewayExamples(t *testing.T) {
+	root := t.TempDir()
+	for _, scope := range []string{"cluster", "namespaced"} {
+		dir := filepath.Join(root, "examples-generated", scope, "gateway", "v1alpha1")
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			t.Fatalf("failed to create %s: %v", dir, err)
+		}
+		path := filepath.Join(dir, "endpoint.yaml")
+		content := `apiVersion: gateway.logfire.pydantic.dev/v1alpha1
+kind: Endpoint
+spec:
+  forProvider:
+    providers:
+    - priority: 10
+      providerId: ${logfire_gateway_provider.openai.id}
+    - providerId: ${logfire_gateway_provider.anthropic.id}
+    slug: default
+`
+		if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
+			t.Fatalf("failed to write %s: %v", path, err)
+		}
+	}
+
+	if err := fixGeneratedGatewayExamples(root); err != nil {
+		t.Fatalf("fixGeneratedGatewayExamples() failed: %v", err)
+	}
+
+	for _, scope := range []string{"cluster", "namespaced"} {
+		path := filepath.Join(root, "examples-generated", scope, "gateway", "v1alpha1", "endpoint.yaml")
+		content, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatalf("failed to read %s: %v", path, err)
+		}
+		got := string(content)
+		if strings.Contains(got, "${") {
+			t.Fatalf("%s example still contains Terraform interpolation: %s", scope, got)
+		}
+		for _, want := range []string{"REPLACE-WITH-openai-PROVIDER-UUID", "REPLACE-WITH-anthropic-PROVIDER-UUID"} {
+			if !strings.Contains(got, want) {
+				t.Fatalf("%s example lost placeholder %s: %s", scope, want, got)
+			}
+		}
+	}
+}
+
 func TestNormalizeGeneratedExamples(t *testing.T) {
 	root := t.TempDir()
 	path := filepath.Join(root, "examples-generated", "cluster", "project", "v1alpha1", "project.yaml")

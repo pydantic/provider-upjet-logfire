@@ -9,12 +9,14 @@ import (
 	alertCluster "github.com/pydantic/provider-upjet-logfire/config/cluster/alert"
 	channelCluster "github.com/pydantic/provider-upjet-logfire/config/cluster/channel"
 	dashboardCluster "github.com/pydantic/provider-upjet-logfire/config/cluster/dashboard"
+	gatewayCluster "github.com/pydantic/provider-upjet-logfire/config/cluster/gateway"
 	projectCluster "github.com/pydantic/provider-upjet-logfire/config/cluster/project"
 	readTokenCluster "github.com/pydantic/provider-upjet-logfire/config/cluster/readtoken"
 	tokenCluster "github.com/pydantic/provider-upjet-logfire/config/cluster/token"
 	alertNamespaced "github.com/pydantic/provider-upjet-logfire/config/namespaced/alert"
 	channelNamespaced "github.com/pydantic/provider-upjet-logfire/config/namespaced/channel"
 	dashboardNamespaced "github.com/pydantic/provider-upjet-logfire/config/namespaced/dashboard"
+	gatewayNamespaced "github.com/pydantic/provider-upjet-logfire/config/namespaced/gateway"
 	projectNamespaced "github.com/pydantic/provider-upjet-logfire/config/namespaced/project"
 	readTokenNamespaced "github.com/pydantic/provider-upjet-logfire/config/namespaced/readtoken"
 	tokenNamespaced "github.com/pydantic/provider-upjet-logfire/config/namespaced/token"
@@ -46,6 +48,7 @@ func GetProvider() *ujconfig.Provider {
 		alertCluster.Configure,
 		channelCluster.Configure,
 		dashboardCluster.Configure,
+		gatewayCluster.Configure,
 		projectCluster.Configure,
 		readTokenCluster.Configure,
 		tokenCluster.Configure,
@@ -75,6 +78,7 @@ func GetProviderNamespaced() *ujconfig.Provider {
 		alertNamespaced.Configure,
 		channelNamespaced.Configure,
 		dashboardNamespaced.Configure,
+		gatewayNamespaced.Configure,
 		projectNamespaced.Configure,
 		readTokenNamespaced.Configure,
 		tokenNamespaced.Configure,

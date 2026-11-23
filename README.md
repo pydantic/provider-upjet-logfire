@@ -8,11 +8,14 @@ The current provider surface is intentionally small:
 - `Alert`
 - `Channel`
 - `Dashboard`
+- `Endpoint`
 - `Project`
+- `ProjectSpendingLimits`
 - `ReadToken`
+- `SpendingLimits`
 - `WriteToken`
 
-The package bundles `terraform-provider-logfire` v0.2.3. The embedded Terraform
+The package bundles `terraform-provider-logfire` v0.3.0. The embedded Terraform
 provider makes the API calls and verifies the Logfire TLS certificate, so its
 release version and Go toolchain matter. `make verify-native-provider` checks the
 minimum Go version.

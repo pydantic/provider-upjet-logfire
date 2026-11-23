@@ -71,6 +71,10 @@ type ConfigInitParameters struct {
 	// Opsgenie API key.
 	AuthKeySecretRef *v1.LocalSecretKeySelector `json:"authKeySecretRef,omitempty" tf:"-"`
 
+	// (String) Opsgenie API base URL, for example https://api.eu.opsgenie.com for an EU account. Only for opsgenie channels. Omitting it on an existing channel retains the current value; set it to https://api.opsgenie.com explicitly to return to the default US endpoint.
+	// Opsgenie API base URL, for example `https://api.eu.opsgenie.com` for an EU account. Only for `opsgenie` channels. Omitting it on an existing channel retains the current value; set it to `https://api.opsgenie.com` explicitly to return to the default US endpoint.
+	BaseURL *string `json:"baseUrl,omitempty" tf:"base_url,omitempty"`
+
 	// (String) Slack channel ID (for example C0123456789) the notifications are posted to. The Logfire Slack bot must already be a member of the channel.
 	// Slack channel ID (for example `C0123456789`) the notifications are posted to. The Logfire Slack bot must already be a member of the channel.
 	ChannelID *string `json:"channelId,omitempty" tf:"channel_id,omitempty"`
@@ -86,6 +90,11 @@ type ConfigInitParameters struct {
 	// > Connections). The installation must belong to the same organization, be active, and match the channel type.
 	// ID of the organization's Slack App or PagerDuty App installation, created by connecting the platform in the Logfire UI (Organization Settings -> Connections). The installation must belong to the same organization, be active, and match the channel type.
 	InstallID *string `json:"installId,omitempty" tf:"install_id,omitempty"`
+
+	// (Set of String) Email addresses the channel notifies, 1 to 50. Required for email channels, which need a Logfire plan with custom email recipients. Logfire normalizes each address, for example by lowercasing its domain. The provider keeps the configured spelling when Logfire stores an equivalent one. A recipient who unsubscribes leaves the channel, and Logfire rejects an update that adds them back until you remove the address from the configuration.
+	// Email addresses the channel notifies, 1 to 50. Required for `email` channels, which need a Logfire plan with custom email recipients. Logfire normalizes each address, for example by lowercasing its domain. The provider keeps the configured spelling when Logfire stores an equivalent one. A recipient who unsubscribes leaves the channel, and Logfire rejects an update that adds them back until you remove the address from the configuration.
+	// +listType=set
+	Recipients []*string `json:"recipients,omitempty" tf:"recipients,omitempty"`
 
 	// integration channel takes its region from the connected account.
 	// PagerDuty account region (`us` or `eu`). When omitted, Logfire uses the US Events API endpoint. Only for `pagerduty` channels; a `pagerduty-integration` channel takes its region from the connected account.
@@ -100,7 +109,7 @@ type ConfigInitParameters struct {
 	ServiceID *string `json:"serviceId,omitempty" tf:"service_id,omitempty"`
 
 	// integration, or slack-integration).
-	// Channel type (`webhook`, `opsgenie`, `pagerduty`, `pagerduty-integration`, or `slack-integration`).
+	// Channel type (`webhook`, `email`, `opsgenie`, `pagerduty`, `pagerduty-integration`, or `slack-integration`).
 	Type *string `json:"type,omitempty" tf:"type,omitempty"`
 
 	// (String) Webhook URL endpoint.
@@ -109,6 +118,10 @@ type ConfigInitParameters struct {
 }
 
 type ConfigObservation struct {
+
+	// (String) Opsgenie API base URL, for example https://api.eu.opsgenie.com for an EU account. Only for opsgenie channels. Omitting it on an existing channel retains the current value; set it to https://api.opsgenie.com explicitly to return to the default US endpoint.
+	// Opsgenie API base URL, for example `https://api.eu.opsgenie.com` for an EU account. Only for `opsgenie` channels. Omitting it on an existing channel retains the current value; set it to `https://api.opsgenie.com` explicitly to return to the default US endpoint.
+	BaseURL *string `json:"baseUrl,omitempty" tf:"base_url,omitempty"`
 
 	// (String) Slack channel ID (for example C0123456789) the notifications are posted to. The Logfire Slack bot must already be a member of the channel.
 	// Slack channel ID (for example `C0123456789`) the notifications are posted to. The Logfire Slack bot must already be a member of the channel.
@@ -126,6 +139,11 @@ type ConfigObservation struct {
 	// ID of the organization's Slack App or PagerDuty App installation, created by connecting the platform in the Logfire UI (Organization Settings -> Connections). The installation must belong to the same organization, be active, and match the channel type.
 	InstallID *string `json:"installId,omitempty" tf:"install_id,omitempty"`
 
+	// (Set of String) Email addresses the channel notifies, 1 to 50. Required for email channels, which need a Logfire plan with custom email recipients. Logfire normalizes each address, for example by lowercasing its domain. The provider keeps the configured spelling when Logfire stores an equivalent one. A recipient who unsubscribes leaves the channel, and Logfire rejects an update that adds them back until you remove the address from the configuration.
+	// Email addresses the channel notifies, 1 to 50. Required for `email` channels, which need a Logfire plan with custom email recipients. Logfire normalizes each address, for example by lowercasing its domain. The provider keeps the configured spelling when Logfire stores an equivalent one. A recipient who unsubscribes leaves the channel, and Logfire rejects an update that adds them back until you remove the address from the configuration.
+	// +listType=set
+	Recipients []*string `json:"recipients,omitempty" tf:"recipients,omitempty"`
+
 	// integration channel takes its region from the connected account.
 	// PagerDuty account region (`us` or `eu`). When omitted, Logfire uses the US Events API endpoint. Only for `pagerduty` channels; a `pagerduty-integration` channel takes its region from the connected account.
 	Region *string `json:"region,omitempty" tf:"region,omitempty"`
@@ -135,7 +153,7 @@ type ConfigObservation struct {
 	ServiceID *string `json:"serviceId,omitempty" tf:"service_id,omitempty"`
 
 	// integration, or slack-integration).
-	// Channel type (`webhook`, `opsgenie`, `pagerduty`, `pagerduty-integration`, or `slack-integration`).
+	// Channel type (`webhook`, `email`, `opsgenie`, `pagerduty`, `pagerduty-integration`, or `slack-integration`).
 	Type *string `json:"type,omitempty" tf:"type,omitempty"`
 
 	// (String) Webhook URL endpoint.
@@ -150,6 +168,11 @@ type ConfigParameters struct {
 	// +kubebuilder:validation:Optional
 	AuthKeySecretRef *v1.LocalSecretKeySelector `json:"authKeySecretRef,omitempty" tf:"-"`
 
+	// (String) Opsgenie API base URL, for example https://api.eu.opsgenie.com for an EU account. Only for opsgenie channels. Omitting it on an existing channel retains the current value; set it to https://api.opsgenie.com explicitly to return to the default US endpoint.
+	// Opsgenie API base URL, for example `https://api.eu.opsgenie.com` for an EU account. Only for `opsgenie` channels. Omitting it on an existing channel retains the current value; set it to `https://api.opsgenie.com` explicitly to return to the default US endpoint.
+	// +kubebuilder:validation:Optional
+	BaseURL *string `json:"baseUrl,omitempty" tf:"base_url,omitempty"`
+
 	// (String) Slack channel ID (for example C0123456789) the notifications are posted to. The Logfire Slack bot must already be a member of the channel.
 	// Slack channel ID (for example `C0123456789`) the notifications are posted to. The Logfire Slack bot must already be a member of the channel.
 	// +kubebuilder:validation:Optional
@@ -170,6 +193,12 @@ type ConfigParameters struct {
 	// +kubebuilder:validation:Optional
 	InstallID *string `json:"installId,omitempty" tf:"install_id,omitempty"`
 
+	// (Set of String) Email addresses the channel notifies, 1 to 50. Required for email channels, which need a Logfire plan with custom email recipients. Logfire normalizes each address, for example by lowercasing its domain. The provider keeps the configured spelling when Logfire stores an equivalent one. A recipient who unsubscribes leaves the channel, and Logfire rejects an update that adds them back until you remove the address from the configuration.
+	// Email addresses the channel notifies, 1 to 50. Required for `email` channels, which need a Logfire plan with custom email recipients. Logfire normalizes each address, for example by lowercasing its domain. The provider keeps the configured spelling when Logfire stores an equivalent one. A recipient who unsubscribes leaves the channel, and Logfire rejects an update that adds them back until you remove the address from the configuration.
+	// +kubebuilder:validation:Optional
+	// +listType=set
+	Recipients []*string `json:"recipients,omitempty" tf:"recipients,omitempty"`
+
 	// integration channel takes its region from the connected account.
 	// PagerDuty account region (`us` or `eu`). When omitted, Logfire uses the US Events API endpoint. Only for `pagerduty` channels; a `pagerduty-integration` channel takes its region from the connected account.
 	// +kubebuilder:validation:Optional
@@ -186,7 +215,7 @@ type ConfigParameters struct {
 	ServiceID *string `json:"serviceId,omitempty" tf:"service_id,omitempty"`
 
 	// integration, or slack-integration).
-	// Channel type (`webhook`, `opsgenie`, `pagerduty`, `pagerduty-integration`, or `slack-integration`).
+	// Channel type (`webhook`, `email`, `opsgenie`, `pagerduty`, `pagerduty-integration`, or `slack-integration`).
 	// +kubebuilder:validation:Optional
 	Type *string `json:"type" tf:"type,omitempty"`
 
