@@ -24,6 +24,10 @@ type ProjectInitParameters struct {
 	// Project name/slug. Must be unique within the organization.
 	Name *string `json:"name,omitempty" tf:"name,omitempty"`
 
+	// admin token exchange (self-hosted only). Changing it replaces the project when the new name is another existing organization than organization_id. Logfire cannot move a project between organizations, so a replacement deletes the project with all its data and creates an empty project. Set lifecycle { prevent_destroy = true } to block it. A new name for the same organization, a name that is not known yet, or a name the instance does not list yet updates in place. After an organization is renamed, a refresh updates this value.
+	// Organization name. Defaults to the provider `organization`, else the organization of the provider credential. Setting it acts in that organization through the instance-admin token exchange (self-hosted only). Changing it replaces the project when the new name is another existing organization than `organization_id`. Logfire cannot move a project between organizations, so a replacement deletes the project with all its data and creates an empty project. Set `lifecycle { prevent_destroy = true }` to block it. A new name for the same organization, a name that is not known yet, or a name the instance does not list yet updates in place. After an organization is renamed, a refresh updates this value.
+	Organization *string `json:"organization,omitempty" tf:"organization,omitempty"`
+
 	// (String) Project visibility (public or private).
 	// Project visibility (`public` or `private`).
 	Visibility *string `json:"visibility,omitempty" tf:"visibility,omitempty"`
@@ -42,9 +46,13 @@ type ProjectObservation struct {
 	// Project name/slug. Must be unique within the organization.
 	Name *string `json:"name,omitempty" tf:"name,omitempty"`
 
-	// (String) Organization name. Computed from the API and cannot be set.
-	// Organization name. Computed from the API and cannot be set.
+	// admin token exchange (self-hosted only). Changing it replaces the project when the new name is another existing organization than organization_id. Logfire cannot move a project between organizations, so a replacement deletes the project with all its data and creates an empty project. Set lifecycle { prevent_destroy = true } to block it. A new name for the same organization, a name that is not known yet, or a name the instance does not list yet updates in place. After an organization is renamed, a refresh updates this value.
+	// Organization name. Defaults to the provider `organization`, else the organization of the provider credential. Setting it acts in that organization through the instance-admin token exchange (self-hosted only). Changing it replaces the project when the new name is another existing organization than `organization_id`. Logfire cannot move a project between organizations, so a replacement deletes the project with all its data and creates an empty project. Set `lifecycle { prevent_destroy = true }` to block it. A new name for the same organization, a name that is not known yet, or a name the instance does not list yet updates in place. After an organization is renamed, a refresh updates this value.
 	Organization *string `json:"organization,omitempty" tf:"organization,omitempty"`
+
+	// (String) ID of the organization that the project is in. Set when the project is in a named organization, through the organization argument or the provider organization. Null for a project in the organization of the credential.
+	// ID of the organization that the project is in. Set when the project is in a named organization, through the `organization` argument or the provider `organization`. Null for a project in the organization of the credential.
+	OrganizationID *string `json:"organizationId,omitempty" tf:"organization_id,omitempty"`
 
 	// (String) Project visibility (public or private).
 	// Project visibility (`public` or `private`).
@@ -62,6 +70,11 @@ type ProjectParameters struct {
 	// Project name/slug. Must be unique within the organization.
 	// +kubebuilder:validation:Optional
 	Name *string `json:"name,omitempty" tf:"name,omitempty"`
+
+	// admin token exchange (self-hosted only). Changing it replaces the project when the new name is another existing organization than organization_id. Logfire cannot move a project between organizations, so a replacement deletes the project with all its data and creates an empty project. Set lifecycle { prevent_destroy = true } to block it. A new name for the same organization, a name that is not known yet, or a name the instance does not list yet updates in place. After an organization is renamed, a refresh updates this value.
+	// Organization name. Defaults to the provider `organization`, else the organization of the provider credential. Setting it acts in that organization through the instance-admin token exchange (self-hosted only). Changing it replaces the project when the new name is another existing organization than `organization_id`. Logfire cannot move a project between organizations, so a replacement deletes the project with all its data and creates an empty project. Set `lifecycle { prevent_destroy = true }` to block it. A new name for the same organization, a name that is not known yet, or a name the instance does not list yet updates in place. After an organization is renamed, a refresh updates this value.
+	// +kubebuilder:validation:Optional
+	Organization *string `json:"organization,omitempty" tf:"organization,omitempty"`
 
 	// (String) Project visibility (public or private).
 	// Project visibility (`public` or `private`).
@@ -96,7 +109,7 @@ type ProjectStatus struct {
 // +kubebuilder:subresource:status
 // +kubebuilder:storageversion
 
-// Project is the Schema for the Projects API. Manages a Logfire project. The credential creates the project in its own organization and must hold organization:create_project.
+// Project is the Schema for the Projects API. Manages a Logfire project. By default the credential creates the project in its own organization and must hold organization:create_project. On a self-hosted instance, an instance-admin credential creates the project in another organization with the organization argument or the provider organization.
 // +kubebuilder:printcolumn:name="SYNCED",type="string",JSONPath=".status.conditions[?(@.type=='Synced')].status"
 // +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="EXTERNAL-NAME",type="string",JSONPath=".metadata.annotations.crossplane\\.io/external-name"

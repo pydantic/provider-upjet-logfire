@@ -614,9 +614,64 @@ resources:
             - |-
               # The organization has one set of spending limits, so the import ID is always "organization".
               terraform import 'logfire_gateway_spending_limits.this' "organization"
+    logfire_group_mappings:
+        subCategory: ""
+        description: Manages the identity-provider group mapping of a self-hosted Logfire instance. The mapping assigns organization and project roles to the members of identity-provider groups at their next sign-in. The instance has one mapping, so declare this resource once. It conflicts with the Helm value groupOrganizationMapping, which overrides the mapping that the API stores. The provider credential must be an API key from the admin organization with the instance:admin scope (organization:admin is equivalent).
+        name: logfire_group_mappings
+        title: logfire_group_mappings Resource - logfire
+        examples:
+            - name: this
+              manifest: |-
+                {
+                  "mapping": [
+                    {
+                      "group_id": "team-a-admins",
+                      "organization_roles": [
+                        {
+                          "organization": "${logfire_organization.team_a.name}",
+                          "role": "admin"
+                        }
+                      ]
+                    },
+                    {
+                      "group_id": "platform-ops",
+                      "organization_roles": [
+                        {
+                          "organization": "platform",
+                          "project_roles": [
+                            {
+                              "project": "api",
+                              "role": "read"
+                            }
+                          ],
+                          "role": "guest"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              dependencies:
+                logfire_organization.team_a: |-
+                    {
+                      "name": "team-a"
+                    }
+        argumentDocs:
+            api_mapping_status: (String) active when sign-in uses the stored mapping. overridden_by_environment when the Helm value groupOrganizationMapping is set, which makes the stored mapping unused.
+            group_id: (String) The identity-provider group ID. Each group ID appears once.
+            id: (String) Always instance.
+            mapping: (Attributes List) The complete mapping, in the order that the instance stores it. An empty list stores no mapping. (see below for nested schema)
+            organization: (String) The organization name. The organization must exist.
+            organization_roles: (Attributes List) The roles that members of the group get in organizations. (see below for nested schema)
+            project: (String) The project name. The project must exist in the organization.
+            project_roles: (Attributes List) The roles that members of the group get in projects of this organization. Only listed projects are managed. Omit it or use an empty list for none. (see below for nested schema)
+            role: (String) The built-in or custom organization role name. The API does not check it, so a wrong name gives no error and sign-in skips the role.
+        importStatements:
+            - |-
+              # The instance has one group mapping, so the import ID is always "instance".
+              terraform import 'logfire_group_mappings.this' "instance"
     logfire_organization:
         subCategory: ""
-        description: Manages a Logfire organization. This resource is only available for self-hosted deployments and requires an API key created in the admin organization (the one with the admin panel) carrying the organization:admin scope. A key minted inside another organization cannot manage organizations regardless of its scopes. Reading, updating, and deleting an organization authenticates with a short-lived organization-scoped token exchanged from that key, and the same exchange backs setting billing_email at creation, so every operation beyond creating and listing requires a Logfire backend from 2026-06-25 (v2026-06-25.01) or newer; creating and listing organizations require 2026-06-03 (v2026-06-03.01) or newer.
+        description: Manages a Logfire organization. This resource is only available for self-hosted deployments and requires an API key created in the admin organization (the one with the admin panel) carrying the organization:admin scope. A key minted inside another organization cannot manage organizations regardless of its scopes. Reading, updating, and deleting an organization authenticates with a short-lived organization-scoped token exchanged from that key, so every operation beyond creating and listing requires a Logfire backend from 2026-06-25 (v2026-06-25.01) or newer; creating and listing organizations require 2026-06-03 (v2026-06-03.01) or newer.
         name: logfire_organization
         title: logfire_organization Resource - logfire
         examples:
@@ -630,7 +685,7 @@ resources:
         argumentDocs:
             ai_enabled: (Boolean) Whether AI features are enabled.
             avatar: (String) Avatar URL.
-            billing_email: (String) Billing contact email.
+            billing_email: (String, Deprecated) Logfire no longer stores a billing email for an organization. The provider does not send this value to Logfire and keeps the configured value only in state. It will be removed in v0.4.0.
             created_at: (String) Timestamp when the organization was created.
             deletion_protection: (Boolean) Prevents accidental destroy when true (defaults to true). Set to false and apply before deleting this resource.
             description: (String) Organization description.
@@ -654,7 +709,7 @@ resources:
               terraform import 'logfire_organization.example' "9f9b2f9e-aaaa-bbbb-cccc-ddddeeeeffff"
     logfire_project:
         subCategory: ""
-        description: Manages a Logfire project. The credential creates the project in its own organization and must hold organization:create_project.
+        description: Manages a Logfire project. By default the credential creates the project in its own organization and must hold organization:create_project. On a self-hosted instance, an instance-admin credential creates the project in another organization with the organization argument or the provider organization.
         name: logfire_project
         title: logfire_project Resource - logfire
         examples:
@@ -668,7 +723,8 @@ resources:
             description: (String) Project description.
             id: (String) Opaque backend project ID (not the slug).
             name: (String) Project name/slug. Must be unique within the organization.
-            organization: (String) Organization name. Computed from the API and cannot be set.
+            organization: (String) Organization name. Defaults to the provider organization, else the organization of the provider credential. Setting it acts in that organization through the instance-admin token exchange (self-hosted only). Changing it replaces the project when the new name is another existing organization than organization_id. Logfire cannot move a project between organizations, so a replacement deletes the project with all its data and creates an empty project. Set lifecycle { prevent_destroy = true } to block it. A new name for the same organization, a name that is not known yet, or a name the instance does not list yet updates in place. After an organization is renamed, a refresh updates this value.
+            organization_id: (String) ID of the organization that the project is in. Set when the project is in a named organization, through the organization argument or the provider organization. Null for a project in the organization of the credential.
             visibility: (String) Project visibility (public or private).
         importStatements:
             - |-

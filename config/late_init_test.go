@@ -20,7 +20,7 @@ func TestLateInitializationSkipsClearableFields(t *testing.T) {
 	} {
 		t.Run(name, func(t *testing.T) {
 			for resource, fields := range map[string]struct{ skipped, kept []string }{
-				"logfire_project":                 {skipped: []string{"description"}, kept: []string{"visibility"}},
+				"logfire_project":                 {skipped: []string{"description", "organization"}, kept: []string{"visibility"}},
 				"logfire_alert":                   {skipped: []string{"description", "environments", "instance_policy"}, kept: []string{"active", "channel_assignments.schedule_id"}},
 				"logfire_channel":                 {skipped: []string{"config.recipients", "config.url"}, kept: []string{"active", "config.base_url"}},
 				"logfire_gateway_spending_limits": {skipped: []string{"daily_usd", "monthly_usd", "weekly_usd"}},
@@ -71,10 +71,10 @@ func TestGeneratedLateInitialization(t *testing.T) {
 	}
 
 	project := &projectv1alpha1.Project{}
-	late(t, project.LateInitialize, `{"description":"observed","visibility":"private"}`)
-	if project.Spec.ForProvider.Description != nil || ptr.Deref(project.Spec.ForProvider.Visibility, "") != "private" {
-		t.Errorf("project: description %v, visibility %v; want only visibility copied",
-			project.Spec.ForProvider.Description, project.Spec.ForProvider.Visibility)
+	late(t, project.LateInitialize, `{"description":"observed","organization":"acme","visibility":"private"}`)
+	if p := project.Spec.ForProvider; p.Description != nil || p.Organization != nil || ptr.Deref(p.Visibility, "") != "private" {
+		t.Errorf("project: description %v, organization %v, visibility %v; want only visibility copied",
+			p.Description, p.Organization, p.Visibility)
 	}
 
 	limits := &gatewayv1alpha1.SpendingLimits{}

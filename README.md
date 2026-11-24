@@ -15,7 +15,7 @@ The current provider surface is intentionally small:
 - `SpendingLimits`
 - `WriteToken`
 
-The package bundles `terraform-provider-logfire` v0.3.0. The embedded Terraform
+The package bundles `terraform-provider-logfire` v0.3.1. The embedded Terraform
 provider makes the API calls and verifies the Logfire TLS certificate, so its
 release version and Go toolchain matter. `make verify-native-provider` checks the
 minimum Go version.
@@ -51,6 +51,7 @@ The provider expects credentials as JSON with:
 
 - `api_key`
 - optional `base_url`
+- optional `organization`
 
 Example secret payload:
 
@@ -65,6 +66,27 @@ Use an organization API key that is not bound to one project. A key bound to a
 project can create other projects but cannot read them, so a new `Project` never
 becomes ready. The key needs the scopes of the kinds you manage, as listed in the
 `terraform-provider-logfire` documentation.
+
+On a self-hosted instance running Logfire v2026-06-25.01 or newer,
+`organization` lets one instance-admin API key act in the named organization.
+Point each organization's resources at their own `ProviderConfig`. That includes
+tokens, alerts, and the other resources inside a project, which use their own
+`ProviderConfig` and not their project's. A `Project` can also set
+`organization` itself, so any `Project` allowed to use an instance-admin
+`ProviderConfig` can create projects in any organization.
+
+Each Terraform run through an organization exchanges the key for a short-lived
+token. Logfire allows 20 exchanges a minute and 100 an hour from one IP address,
+and every resource runs Terraform at least once per poll, which is every 10
+minutes by default. Keep such a `ProviderConfig` to about a dozen resources, or
+use an organization-wide key from each organization instead.
+
+Changing a `ProviderConfig`'s `organization` does not move the resources that use
+it. The provider looks for them in the new organization and creates again any
+that it does not find there. A `SpendingLimits` resource has the same ID in every
+organization, so it writes its limits over those of the new organization, and
+deleting it then clears them. A `Project` created in a named organization stays
+in it.
 
 ## Tokens
 
@@ -109,12 +131,16 @@ Resources follow Terraform's semantics, with these points to know:
   Copy the values from `status.atProvider` into `spec.forProvider`, then remove
   `managementPolicies`. Status leaves out channel credentials and masks a
   webhook URL, so add the channel's real `url` and its `authKeySecretRef` or
-  `routingKeySecretRef`. Read and write tokens cannot be imported.
+  `routingKeySecretRef`. Read and write tokens cannot be imported. To import a
+  project from another organization, use a `ProviderConfig` whose
+  `organization` names it, because the provider reads a `Project`'s own
+  `organization` only after it has observed the project.
 - A `SpendingLimits` or `ProjectSpendingLimits` resource owns all three windows.
   A window it leaves out has no limit, and deleting the resource removes every
   limit.
 - Changing a field that Terraform can only change by replacing the object is
-  refused: a dashboard or endpoint `slug`, a `projectId`, or a token `expiresAt`.
+  refused: a dashboard or endpoint `slug`, a `projectId`, a token `expiresAt`,
+  or a project `organization` that names another existing organization.
   The resource reports `Synced=False` with a `prevent_destroy` error. Delete the
   resource and create it with the new value instead.
 
