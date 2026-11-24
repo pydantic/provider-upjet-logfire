@@ -52,6 +52,11 @@ func (in *ProjectInitParameters) DeepCopyInto(out *ProjectInitParameters) {
 		*out = new(string)
 		**out = **in
 	}
+	if in.Organization != nil {
+		in, out := &in.Organization, &out.Organization
+		*out = new(string)
+		**out = **in
+	}
 	if in.Visibility != nil {
 		in, out := &in.Visibility, &out.Visibility
 		*out = new(string)
@@ -124,6 +129,11 @@ func (in *ProjectObservation) DeepCopyInto(out *ProjectObservation) {
 		*out = new(string)
 		**out = **in
 	}
+	if in.OrganizationID != nil {
+		in, out := &in.OrganizationID, &out.OrganizationID
+		*out = new(string)
+		**out = **in
+	}
 	if in.Visibility != nil {
 		in, out := &in.Visibility, &out.Visibility
 		*out = new(string)
@@ -151,6 +161,11 @@ func (in *ProjectParameters) DeepCopyInto(out *ProjectParameters) {
 	}
 	if in.Name != nil {
 		in, out := &in.Name, &out.Name
+		*out = new(string)
+		**out = **in
+	}
+	if in.Organization != nil {
+		in, out := &in.Organization, &out.Organization
 		*out = new(string)
 		**out = **in
 	}

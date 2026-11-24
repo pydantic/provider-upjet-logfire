@@ -16,6 +16,15 @@ var replacedOnChange = map[string]map[string]bool{
 	"logfire_write_token": {"expires_at": true},
 }
 
+// renamedInLogfire lists, per resource, the optional computed fields whose
+// observed value changes when the object is renamed in Logfire. Terraform keeps
+// the state value when the configuration omits them, and a refresh follows the
+// rename. A late-initialized copy in the spec would keep the old name and make
+// every later apply fail.
+var renamedInLogfire = map[string]map[string]bool{
+	"logfire_project": {"organization": true},
+}
+
 // LateInitializeComputedOnly stops late-initialization from copying optional
 // fields that have no server-side default into the spec. Otherwise a field
 // removed from the spec is copied back from the observed resource and never
@@ -24,12 +33,13 @@ var replacedOnChange = map[string]map[string]bool{
 func LateInitializeComputedOnly() ujconfig.ResourceOption {
 	return func(r *ujconfig.Resource) {
 		keep := replacedOnChange[r.Name]
+		renamed := renamedInLogfire[r.Name]
 		var ignored []string
 		var walk func(prefix string, fields map[string]*schema.Schema)
 		walk = func(prefix string, fields map[string]*schema.Schema) {
 			for name, s := range fields {
 				path := prefix + name
-				if s.Optional && !s.Computed && !keep[path] {
+				if (s.Optional && !s.Computed && !keep[path]) || renamed[path] {
 					ignored = append(ignored, path)
 					continue
 				}

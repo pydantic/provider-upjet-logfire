@@ -35,8 +35,10 @@ spec:
     schema:
       openAPIV3Schema:
         description: Project is the Schema for the Projects API. Manages a Logfire
-          project. The credential creates the project in its own organization and
-          must hold organization:create_project.
+          project. By default the credential creates the project in its own organization
+          and must hold organization:create_project. On a self-hosted instance, an
+          instance-admin credential creates the project in another organization with
+          the organization argument or the provider organization.
         properties:
           apiVersion:
             description: |-
@@ -70,6 +72,11 @@ spec:
                       (String) Project name/slug. Must be unique within the organization.
                       Project name/slug. Must be unique within the organization.
                     type: string
+                  organization:
+                    description: |-
+                      admin token exchange (self-hosted only). Changing it replaces the project when the new name is another existing organization than organization_id. Logfire cannot move a project between organizations, so a replacement deletes the project with all its data and creates an empty project. Set lifecycle { prevent_destroy = true } to block it. A new name for the same organization, a name that is not known yet, or a name the instance does not list yet updates in place. After an organization is renamed, a refresh updates this value.
+                      Organization name. Defaults to the provider `organization`, else the organization of the provider credential. Setting it acts in that organization through the instance-admin token exchange (self-hosted only). Changing it replaces the project when the new name is another existing organization than `organization_id`. Logfire cannot move a project between organizations, so a replacement deletes the project with all its data and creates an empty project. Set `lifecycle { prevent_destroy = true }` to block it. A new name for the same organization, a name that is not known yet, or a name the instance does not list yet updates in place. After an organization is renamed, a refresh updates this value.
+                    type: string
                   visibility:
                     description: |-
                       (String) Project visibility (public or private).
@@ -98,6 +105,11 @@ spec:
                     description: |-
                       (String) Project name/slug. Must be unique within the organization.
                       Project name/slug. Must be unique within the organization.
+                    type: string
+                  organization:
+                    description: |-
+                      admin token exchange (self-hosted only). Changing it replaces the project when the new name is another existing organization than organization_id. Logfire cannot move a project between organizations, so a replacement deletes the project with all its data and creates an empty project. Set lifecycle { prevent_destroy = true } to block it. A new name for the same organization, a name that is not known yet, or a name the instance does not list yet updates in place. After an organization is renamed, a refresh updates this value.
+                      Organization name. Defaults to the provider `organization`, else the organization of the provider credential. Setting it acts in that organization through the instance-admin token exchange (self-hosted only). Changing it replaces the project when the new name is another existing organization than `organization_id`. Logfire cannot move a project between organizations, so a replacement deletes the project with all its data and creates an empty project. Set `lifecycle { prevent_destroy = true }` to block it. A new name for the same organization, a name that is not known yet, or a name the instance does not list yet updates in place. After an organization is renamed, a refresh updates this value.
                     type: string
                   visibility:
                     description: |-
@@ -188,8 +200,13 @@ spec:
                     type: string
                   organization:
                     description: |-
-                      (String) Organization name. Computed from the API and cannot be set.
-                      Organization name. Computed from the API and cannot be set.
+                      admin token exchange (self-hosted only). Changing it replaces the project when the new name is another existing organization than organization_id. Logfire cannot move a project between organizations, so a replacement deletes the project with all its data and creates an empty project. Set lifecycle { prevent_destroy = true } to block it. A new name for the same organization, a name that is not known yet, or a name the instance does not list yet updates in place. After an organization is renamed, a refresh updates this value.
+                      Organization name. Defaults to the provider `organization`, else the organization of the provider credential. Setting it acts in that organization through the instance-admin token exchange (self-hosted only). Changing it replaces the project when the new name is another existing organization than `organization_id`. Logfire cannot move a project between organizations, so a replacement deletes the project with all its data and creates an empty project. Set `lifecycle { prevent_destroy = true }` to block it. A new name for the same organization, a name that is not known yet, or a name the instance does not list yet updates in place. After an organization is renamed, a refresh updates this value.
+                    type: string
+                  organizationId:
+                    description: |-
+                      (String) ID of the organization that the project is in. Set when the project is in a named organization, through the organization argument or the provider organization. Null for a project in the organization of the credential.
+                      ID of the organization that the project is in. Set when the project is in a named organization, through the `organization` argument or the provider `organization`. Null for a project in the organization of the credential.
                     type: string
                   visibility:
                     description: |-

@@ -23,8 +23,9 @@ const (
 	errExtractCredentials   = "cannot extract credentials"
 	errUnmarshalCredentials = "cannot unmarshal logfire credentials as JSON"
 
-	keyAPIKey  = "api_key"
-	keyBaseURL = "base_url"
+	keyAPIKey       = "api_key"
+	keyBaseURL      = "base_url"
+	keyOrganization = "organization"
 )
 
 // TerraformSetupBuilder builds Terraform a terraform.SetupFn function which
@@ -54,11 +55,10 @@ func TerraformSetupBuilder(version, providerSource, providerVersion string) terr
 		}
 
 		ps.Configuration = map[string]any{}
-		if v, ok := creds[keyAPIKey]; ok && v != "" {
-			ps.Configuration[keyAPIKey] = v
-		}
-		if v, ok := creds[keyBaseURL]; ok && v != "" {
-			ps.Configuration[keyBaseURL] = v
+		for _, key := range []string{keyAPIKey, keyBaseURL, keyOrganization} {
+			if v := creds[key]; v != "" {
+				ps.Configuration[key] = v
+			}
 		}
 		return ps, nil
 	}

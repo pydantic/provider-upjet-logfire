@@ -15,7 +15,7 @@ The current provider surface is intentionally small:
 - `SpendingLimits`
 - `WriteToken`
 
-The package bundles `terraform-provider-logfire` v0.3.0. The embedded Terraform
+The package bundles `terraform-provider-logfire` v0.3.1. The embedded Terraform
 provider makes the API calls and verifies the Logfire TLS certificate, so its
 release version and Go toolchain matter. `make verify-native-provider` checks the
 minimum Go version.
@@ -51,6 +51,7 @@ The provider expects credentials as JSON with:
 
 - `api_key`
 - optional `base_url`
+- optional `organization`
 
 Example secret payload:
 
@@ -65,6 +66,13 @@ Use an organization API key that is not bound to one project. A key bound to a
 project can create other projects but cannot read them, so a new `Project` never
 becomes ready. The key needs the scopes of the kinds you manage, as listed in the
 `terraform-provider-logfire` documentation.
+
+On a self-hosted instance, `organization` lets one instance-admin API key act in
+the named organization. Point each organization's resources at their own
+`ProviderConfig`. A `Project` can also set `organization` itself. Changing a
+`ProviderConfig`'s `organization` does not move the resources that use it. The
+provider looks for them in the new organization and creates again any that it
+does not find there. A `Project` created in a named organization stays in it.
 
 ## Tokens
 
@@ -114,7 +122,8 @@ Resources follow Terraform's semantics, with these points to know:
   A window it leaves out has no limit, and deleting the resource removes every
   limit.
 - Changing a field that Terraform can only change by replacing the object is
-  refused: a dashboard or endpoint `slug`, a `projectId`, or a token `expiresAt`.
+  refused: a dashboard or endpoint `slug`, a `projectId`, a token `expiresAt`,
+  or a project `organization` that names another existing organization.
   The resource reports `Synced=False` with a `prevent_destroy` error. Delete the
   resource and create it with the new value instead.
 
