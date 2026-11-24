@@ -22,13 +22,15 @@ FEATURES:
 - Bundle `terraform-provider-logfire` v0.3.1.
 - The credentials accept an optional `organization`. On a self-hosted instance,
   one instance-admin API key then acts in that organization. Changing it does
-  not move existing resources.
+  not move existing resources. Each Terraform run exchanges the key for a
+  token, and Logfire limits exchanges per IP address, so a `ProviderConfig`
+  that sets `organization` suits about a dozen resources.
 - `Project` adds `organization`, which creates the project in another
   organization through an instance-admin key, and reports `organizationId`.
   Changing `organization` to another existing organization is refused, because
   Logfire would delete the project to move it. Late-initialization does not copy
-  `organization` into the spec, so a renamed organization does not block later
-  updates.
+  `organization` into the spec, so a rename of the organization does not block
+  later updates of a `Project` that leaves `organization` unset.
 - `Dashboard` marks dashboards as managed and adds `managedAllowEdits`.
 - `Alert` adds `instancePolicy` for per-occurrence notifications.
 - `Channel` adds `email` channels with `recipients`, and `baseUrl` for
@@ -41,10 +43,11 @@ FEATURES:
 
 BUG FIXES:
 
-- An empty success response from Logfire is an error. A list read treated it as
-  an empty list, so the provider could lose track of every object in it.
-- A create that the Logfire rate limit refuses is retried after the
-  `Retry-After` delay.
+- An empty success response is an error when the provider reads the response
+  body. A list read treated it as an empty list, so the provider could lose
+  track of every object in it.
+- A create that the Logfire public API rate limit refuses is retried after the
+  `Retry-After` delay when that delay fits the provider's retry budget.
 - An `Alert` that names its channel with `channelIdRef` or `channelIdSelector`
   keeps reconciling after later edits. Crossplane's reference resolver saved only
   the fields it changed with a server-side apply, which dropped `projectId` or
